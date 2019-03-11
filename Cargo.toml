@@ -1,0 +1,11 @@
+[package]
+name = "nbodyrs"
+version = "0.1.0"
+authors = ["fish <mikail.khan45@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+ggez = "0.4.4"
+nalgebra = "0.17.2"
+rand = "0.6.5"
+mint = "0.5.1"
