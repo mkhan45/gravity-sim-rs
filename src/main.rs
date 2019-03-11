@@ -9,18 +9,20 @@ struct MainState {
     screen_height: u32,
 }
 
+const G: f32 = 6.674;
+
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let bodies = vec![
             Body::new(
                 Point2::new(50.0, 200.0),
-                5.0,
+                1000.0,
                 10.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
                 Point2::new(200.0, 300.0),
-                5.0,
+                1000.0,
                 10.0,
                 Vector2::new(0.0, -1.0)),
         ];
@@ -33,14 +35,43 @@ impl MainState {
     }
 
     fn update_velocities(&mut self){
-        for i in 0..self.bodies.len(){
-            if(self.bodies[i].pos.y + self.bodies[i].radius * 2.0 <= self.screen_height as f32){
-                self.bodies[i].velocity.y += 9.81 * 0.005;
-            }else {
-                self.bodies[i].velocity.y = 0.0;
+        // for i in 0..self.bodies.len(){
+        //     if(self.bodies[i].pos.y + self.bodies[i].radius * 2.0 <= self.screen_height as f32){
+        //         self.bodies[i].velocity.y += 9.81 * 0.005;
+        //     }else {
+        //         self.bodies[i].velocity.y = 0.0;
+        //     }
+        // }
+        
+        for current_body_i in 0..self.bodies.len(){
+            for other_body_i in 0..self.bodies.len(){
+                if other_body_i != current_body_i {
+                    let other_body = &self.bodies[other_body_i].clone();
+                    let current_body = &mut self.bodies[current_body_i];
+
+                    let r = distance(&other_body.pos, &current_body.pos);
+                    let a_mag = (G*other_body.mass)/(r.powf(2.0)); //acceleration = Gm_2/r^2
+                    let angle = angle(&other_body.pos, &current_body.pos);
+
+                    self.bodies[current_body_i].velocity.x = angle.cos() * a_mag;
+                    self.bodies[current_body_i].velocity.y = angle.sin() * a_mag;
+                }
             }
         }
     }
+}
+
+fn distance(a: &Point2, b: &Point2) -> f32{
+    ((b.x - a.x).powf(2.0) + (b.y-a.y).powf(2.0)).sqrt()
+}
+
+fn angle(a: &Point2, b: &Point2) -> f32{
+    let mut restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan();
+    if b.x > a.x{
+        restricted_dom += 3.1415;
+    }
+
+    restricted_dom
 }
 
 type Point2 = na::Point2<f32>;
@@ -66,6 +97,15 @@ impl Body {
     fn update(&mut self){
         self.pos.x += self.velocity.x;
         self.pos.y += self.velocity.y;
+    }
+
+    fn clone(&self) -> Body{
+        Body {
+            pos: self.pos,
+            mass: self.mass,
+            radius: self.radius,
+            velocity: self.velocity,
+        }
     }
 }
 
