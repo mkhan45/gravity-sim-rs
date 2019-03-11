@@ -140,13 +140,26 @@ impl event::EventHandler for MainState {
         }
 
         graphics::present(ctx);
+        if ggez::timer::get_ticks(ctx) % 60 == 0{
+            println!("FPS: {}", ggez::timer::get_fps(ctx));
+        }
         Ok(())
     }
 }
 
 pub fn main() {
-    let c = conf::Conf::new();
+    let windowsetup = ggez::conf::WindowSetup{
+        title: "N-body Gravity Simulator".to_owned(),
+        icon: "".to_owned(),
+        resizable: true,
+        allow_highdpi: true,
+        samples: ggez::conf::NumSamples::One,
+    };
+
+    let mut c = conf::Conf::new();
     c.window_mode.vsync(true);
+    c.window_setup = windowsetup;
+
     let ctx = &mut Context::load_from_conf("Nbody Sim", "Fish", c).unwrap();
     let state = &mut MainState::new(ctx).unwrap();
     event::run(ctx, state).unwrap();
