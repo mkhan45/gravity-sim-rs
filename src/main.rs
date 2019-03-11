@@ -14,18 +14,20 @@ const G: f32 = 6.674;
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
+        let width = ctx.conf.window_mode.width as f32;
+        let height = ctx.conf.window_mode.height as f32;
         let bodies = vec![
             Body::new(
-                Point2::new(200.0, 200.0),
+                Point2::new(width/2.0, height/2.0),
                 300.0,
                 10.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
-                Point2::new(300.0, 400.0),
+                Point2::new(600.0, 400.0),
                 1.0,
                 5.0,
-                Vector2::new(0.0, -3.0)),
+                Vector2::new(0.0, -2.5)),
         ];
         let s = MainState {
             bodies,
