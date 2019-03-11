@@ -2,6 +2,7 @@ extern crate ggez;
 use ggez::*;
 use ggez::graphics;
 use ggez::nalgebra as na;
+use std::f32::consts::PI;
 
 struct MainState {
     bodies: Vec<Body>,
@@ -15,16 +16,16 @@ impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let bodies = vec![
             Body::new(
-                Point2::new(50.0, 200.0),
-                1000.0,
+                Point2::new(200.0, 200.0),
+                300.0,
                 10.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
-                Point2::new(200.0, 300.0),
-                1000.0,
-                10.0,
-                Vector2::new(0.0, -1.0)),
+                Point2::new(300.0, 400.0),
+                1.0,
+                5.0,
+                Vector2::new(0.0, -3.0)),
         ];
         let s = MainState {
             bodies,
@@ -53,8 +54,8 @@ impl MainState {
                     let a_mag = (G*other_body.mass)/(r.powf(2.0)); //acceleration = Gm_2/r^2
                     let angle = angle(&other_body.pos, &current_body.pos);
 
-                    self.bodies[current_body_i].velocity.x = angle.cos() * a_mag;
-                    self.bodies[current_body_i].velocity.y = angle.sin() * a_mag;
+                    self.bodies[current_body_i].velocity.x += angle.cos() * a_mag;
+                    self.bodies[current_body_i].velocity.y += angle.sin() * a_mag;
                 }
             }
         }
@@ -67,8 +68,8 @@ fn distance(a: &Point2, b: &Point2) -> f32{
 
 fn angle(a: &Point2, b: &Point2) -> f32{
     let mut restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan();
-    if b.x > a.x{
-        restricted_dom += 3.1415;
+    if b.x >= a.x{
+        restricted_dom += PI;
     }
 
     restricted_dom
