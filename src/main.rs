@@ -3,6 +3,7 @@ use ggez::*;
 use ggez::graphics;
 use ggez::nalgebra as na;
 use std::f32::consts::PI;
+use std::collections::HashSet;
 
 struct MainState {
     bodies: Vec<Body>,
@@ -43,7 +44,7 @@ impl MainState {
         Ok(s)
     }
 
-    fn update_velocities(&mut self){
+    fn update_velocities_and_collide(&mut self){
         // for i in 0..self.bodies.len(){
         //     if(self.bodies[i].pos.y + self.bodies[i].radius * 2.0 <= self.screen_height as f32){
         //         self.bodies[i].velocity.y += 9.81 * 0.005;
@@ -52,6 +53,9 @@ impl MainState {
         //     }
         // }
         
+        let mut collision_blacklist = HashSet::new();
+        let mut collision_bodies = Vec::new();
+
         for current_body_i in 0..self.bodies.len(){
             for other_body_i in 0..self.bodies.len(){
                 if other_body_i != current_body_i {
@@ -61,13 +65,52 @@ impl MainState {
                     let r = distance(&other_body.pos, &current_body.pos);
                     let a_mag = (G*other_body.mass)/(r.powf(2.0)); //acceleration = Gm_2/r^2
                     let angle = angle(&other_body.pos, &current_body.pos);
+                    
+                    if r <= other_body.radius + current_body.radius && !collision_blacklist.contains(&current_body_i){
+                        println!("Collision");
+                        collision_blacklist.insert(current_body_i);
+                        collision_blacklist.insert(other_body_i);
+                        collision_bodies.push(collide(&current_body, &other_body));
+                    }
 
                     self.bodies[current_body_i].velocity.x += angle.cos() * a_mag;
                     self.bodies[current_body_i].velocity.y += angle.sin() * a_mag;
                 }
             }
         }
+
+        self.bodies = self.bodies.iter()
+            .enumerate()
+            .filter_map(|(index, body)| {
+                if collision_blacklist.contains(&index) {
+                    None
+                } else {
+                    Some(body.clone())
+                }
+            }).collect();
+        
+        self.bodies.append(&mut collision_bodies);
     }
+}
+
+fn collide(body1: &Body, body2: &Body) -> Body{
+    let body1_momentum = Point2::new(body1.velocity.x, body1.velocity.y);
+    let body2_momentum = Point2::new(body2.velocity.x, body2.velocity.y);
+
+    let body1_momentum = Point2::new(body1_momentum.x * body1.mass, body1_momentum.y * body1.mass);
+    let body2_momentum = Point2::new(body2_momentum.x * body2.mass, body2_momentum.y * body2.mass);
+
+    let total_momentum = Vector2::new(body1_momentum.x + body2_momentum.x, body1_momentum.y + body2_momentum.y);
+
+    let total_mass = body1.mass + body2.mass;
+
+    Body{
+        pos: Point2::new(body1.pos.x, body1.pos.y),
+        mass: body1.mass + body2.mass,
+        radius: body1.radius + body2.radius,
+        velocity: Vector2::new(total_momentum.x/total_mass, total_momentum.y/total_mass),
+    }
+
 }
 
 fn distance(a: &Point2, b: &Point2) -> f32{
@@ -86,6 +129,7 @@ fn angle(a: &Point2, b: &Point2) -> f32{
 type Point2 = na::Point2<f32>;
 type Vector2 = na::Vector2<f32>;
 
+#[derive(Clone)]
 struct Body {
     pos: Point2,
     mass: f32,
@@ -107,15 +151,15 @@ impl Body {
         self.pos.x += self.velocity.x;
         self.pos.y += self.velocity.y;
     }
-
-    fn clone(&self) -> Body{
-        Body {
-            pos: self.pos,
-            mass: self.mass,
-            radius: self.radius,
-            velocity: self.velocity,
-        }
-    }
+    
+    // fn clone(&self) -> Body{
+    //     Body {
+    //         pos: self.pos,
+    //         mass: self.mass,
+    //         radius: self.radius,
+    //         velocity: self.velocity,
+    //     }
+    // }
 }
 
 
@@ -123,7 +167,7 @@ impl Body {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        self.update_velocities();
+        self.update_velocities_and_collide();
         for i in 0..self.bodies.len(){
             self.bodies[i].update();
         }
