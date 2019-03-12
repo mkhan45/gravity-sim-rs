@@ -23,15 +23,15 @@ impl MainState {
         let bodies = vec![
             Body::new(
                 Point2::new(width/2.0, height/2.0),
-                300.0,
-                10.0,
+                1000.0,
+                40.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
-                Point2::new(600.0, 400.0),
+                Point2::new(700.0, 300.0),
                 1.0,
                 5.0,
-                Vector2::new(0.0, -2.5)),
+                Vector2::new(0.0, -3.5)),
         ];
         let s = MainState {
             bodies,
@@ -45,14 +45,6 @@ impl MainState {
     }
 
     fn update_velocities_and_collide(&mut self){
-        // for i in 0..self.bodies.len(){
-        //     if(self.bodies[i].pos.y + self.bodies[i].radius * 2.0 <= self.screen_height as f32){
-        //         self.bodies[i].velocity.y += 9.81 * 0.005;
-        //     }else {
-        //         self.bodies[i].velocity.y = 0.0;
-        //     }
-        // }
-        
         let mut collision_blacklist = HashSet::new();
         let mut collision_bodies = Vec::new();
 
@@ -71,6 +63,7 @@ impl MainState {
                         collision_blacklist.insert(current_body_i);
                         collision_blacklist.insert(other_body_i);
                         collision_bodies.push(collide(&current_body, &other_body));
+                        println!("Rad: {}", collide(&current_body, &other_body).radius);
                     }
 
                     self.bodies[current_body_i].velocity.x += angle.cos() * a_mag;
@@ -104,13 +97,12 @@ fn collide(body1: &Body, body2: &Body) -> Body{
 
     let total_mass = body1.mass + body2.mass;
 
-    Body{
-        pos: Point2::new(body1.pos.x, body1.pos.y),
-        mass: body1.mass + body2.mass,
-        radius: body1.radius + body2.radius,
-        velocity: Vector2::new(total_momentum.x/total_mass, total_momentum.y/total_mass),
-    }
-
+    Body::new(
+        if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)},
+        body1.mass + body2.mass,
+        body1.radius + body2.radius,
+        Vector2::new(total_momentum.x/total_mass, total_momentum.y/total_mass),
+    )
 }
 
 fn distance(a: &Point2, b: &Point2) -> f32{
@@ -152,14 +144,6 @@ impl Body {
         self.pos.y += self.velocity.y;
     }
     
-    // fn clone(&self) -> Body{
-    //     Body {
-    //         pos: self.pos,
-    //         mass: self.mass,
-    //         radius: self.radius,
-    //         velocity: self.velocity,
-    //     }
-    // }
 }
 
 
@@ -188,7 +172,7 @@ impl event::EventHandler for MainState {
                 ctx,
                 graphics::DrawMode::Fill,
                 self.bodies[i].pos,
-                self.bodies[i].radius*2.0,
+                self.bodies[i].radius,
                 2.0,
             )?;
 
@@ -210,7 +194,7 @@ impl event::EventHandler for MainState {
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
         self.bodies.push(Body::new(
                 Point2::new(x as f32, y as f32),
-                self.current_rad * 3.0,
+                self.current_rad * 1.0,
                 self.current_rad,
                 Vector2::new((x as f32 - self.start_point.x)/10.0, (y as f32 - self.start_point.y)/10.0)),
                 );
