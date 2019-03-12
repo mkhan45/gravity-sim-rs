@@ -8,6 +8,9 @@ struct MainState {
     bodies: Vec<Body>,
     screen_width: u32,
     screen_height: u32,
+    current_rad: f32,
+    mouse_down: bool,
+    start_point: Point2,
 }
 
 const G: f32 = 6.674;
@@ -33,6 +36,9 @@ impl MainState {
             bodies,
             screen_width: ctx.conf.window_mode.width,
             screen_height: ctx.conf.window_mode.height,
+            current_rad: 0.0,
+            mouse_down: false,
+            start_point: Point2::new(0.0, 0.0),
         };
         Ok(s)
     }
@@ -114,12 +120,18 @@ impl Body {
 
 
 
+
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
         self.update_velocities();
         for i in 0..self.bodies.len(){
             self.bodies[i].update();
         }
+
+        if self.mouse_down {
+            self.current_rad += 0.2;
+        } 
+
         Ok(())
     }
 
@@ -145,13 +157,31 @@ impl event::EventHandler for MainState {
         }
         Ok(())
     }
+
+    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
+        self.mouse_down = true;
+        self.start_point = Point2::new(x as f32, y as f32);
+    }
+
+    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
+        self.bodies.push(Body::new(
+                Point2::new(x as f32, y as f32),
+                self.current_rad * 3.0,
+                self.current_rad,
+                Vector2::new((x as f32 - self.start_point.x)/10.0, (y as f32 - self.start_point.y)/10.0)),
+                );
+
+        self.current_rad = 0.0;
+        self.mouse_down = false;
+    }
+
 }
 
 pub fn main() {
     let windowsetup = ggez::conf::WindowSetup{
         title: "N-body Gravity Simulator".to_owned(),
         icon: "".to_owned(),
-        resizable: true,
+        resizable: false,
         allow_highdpi: true,
         samples: ggez::conf::NumSamples::One,
     };
@@ -161,6 +191,8 @@ pub fn main() {
     c.window_setup = windowsetup;
 
     let ctx = &mut Context::load_from_conf("Nbody Sim", "Fish", c).unwrap();
+    ggez::graphics::set_background_color(ctx, ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0));
+
     let state = &mut MainState::new(ctx).unwrap();
     event::run(ctx, state).unwrap();
 }
