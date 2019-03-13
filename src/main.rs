@@ -23,15 +23,15 @@ impl MainState {
         let bodies = vec![
             Body::new(
                 Point2::new(width/2.0, height/2.0),
-                1000.0,
-                40.0,
+                5000.0,
+                30.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
-                Point2::new(700.0, 300.0),
+                Point2::new(width/2.0 + 350.0, height/2.0),
                 1.0,
                 5.0,
-                Vector2::new(0.0, -3.5)),
+                Vector2::new(-3.0, -6.5)),
         ];
         let s = MainState {
             bodies,
@@ -63,7 +63,6 @@ impl MainState {
                         collision_blacklist.insert(current_body_i);
                         collision_blacklist.insert(other_body_i);
                         collision_bodies.push(collide(&current_body, &other_body));
-                        println!("Rad: {}", collide(&current_body, &other_body).radius);
                     }
 
                     self.bodies[current_body_i].velocity.x += angle.cos() * a_mag;
@@ -214,8 +213,20 @@ pub fn main() {
         samples: ggez::conf::NumSamples::One,
     };
 
+    let windowmode = ggez::conf::WindowMode{
+        width: 1000,
+        height: 800,
+        borderless: true,
+        fullscreen_type: ggez::conf::FullscreenType::Off,
+        vsync:true,
+        min_width: 0,
+        max_width: 0,
+        min_height: 0,
+        max_height: 0,
+    };
+
     let mut c = conf::Conf::new();
-    c.window_mode.vsync(true);
+    c.window_mode = windowmode;
     c.window_setup = windowsetup;
 
     let ctx = &mut Context::load_from_conf("Nbody Sim", "Fish", c).unwrap();
