@@ -12,6 +12,7 @@ struct MainState {
     current_rad: f32,
     mouse_down: bool,
     start_point: Point2,
+    zoom: f32,
 }
 
 const G: f32 = 6.674;
@@ -40,6 +41,7 @@ impl MainState {
             current_rad: 0.0,
             mouse_down: false,
             start_point: Point2::new(0.0, 0.0),
+            zoom: 1.0,
         };
         Ok(s)
     }
@@ -170,8 +172,8 @@ impl event::EventHandler for MainState {
             let body = graphics::Mesh::new_circle(
                 ctx,
                 graphics::DrawMode::Fill,
-                self.bodies[i].pos,
-                self.bodies[i].radius,
+                Point2::new(self.bodies[i].pos.x * &self.zoom, self.bodies[i].pos.y * &self.zoom),
+                self.bodies[i].radius * &self.zoom,
                 2.0,
             )?;
 
@@ -187,21 +189,29 @@ impl event::EventHandler for MainState {
 
     fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
         self.mouse_down = true;
-        self.start_point = Point2::new(x as f32, y as f32);
+        self.start_point = Point2::new(x as f32 * (1.0/&self.zoom), y as f32 * (1.0/&self.zoom));
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
+        let zoomed_x = x as f32 * (1.0/&self.zoom);
+        let zoomed_y = y as f32 * (1.0/&self.zoom);
+
         self.bodies.push(Body::new(
-                Point2::new(x as f32, y as f32),
+                Point2::new(zoomed_x as f32, zoomed_y as f32),
                 self.current_rad * 1.0,
                 self.current_rad,
-                Vector2::new((x as f32 - self.start_point.x)/10.0, (y as f32 - self.start_point.y)/10.0)),
+                Vector2::new((zoomed_x as f32 - self.start_point.x)/10.0, (zoomed_y as f32 - self.start_point.y)/10.0)),
                 );
 
         self.current_rad = 0.0;
         self.mouse_down = false;
     }
 
+
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, _y: i32) {
+        println!("Zoom: {}", self.zoom);
+        self.zoom *= 1.0 + (_y as f32 * 0.1); 
+    }
 }
 
 pub fn main() {
