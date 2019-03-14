@@ -200,7 +200,7 @@ impl event::EventHandler for MainState {
         }
         
 
-        graphics::draw(ctx, &text, params.scale(Vector2::new(1.0, 1.0)));
+        graphics::draw(ctx, &text, graphics::DrawParam::new());
 
         graphics::present(ctx);
         if ggez::timer::ticks(ctx) % 60 == 0{
