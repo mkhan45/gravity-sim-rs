@@ -198,10 +198,12 @@ impl event::EventHandler for MainState {
 
         self.bodies.push(Body::new(
                 Point2::new(zoomed_x as f32, zoomed_y as f32),
-                self.current_rad * 1.0,
-                self.current_rad,
-                Vector2::new((zoomed_x as f32 - self.start_point.x)/10.0, (zoomed_y as f32 - self.start_point.y)/10.0)),
-                );
+                self.current_rad * 1.0 * (1.0/&self.zoom),
+                self.current_rad * (1.0/&self.zoom),
+                Vector2::new((zoomed_x as f32 - self.start_point.x)/10.0, (zoomed_y as f32 - self.start_point.y)/10.0 ),
+                ));
+
+        println!("Mass: {}", self.current_rad * 1.0 * (1.0/&self.zoom));
 
         self.current_rad = 0.0;
         self.mouse_down = false;
