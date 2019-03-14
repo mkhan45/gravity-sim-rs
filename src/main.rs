@@ -2,30 +2,32 @@ extern crate ggez;
 use ggez::*;
 use ggez::graphics;
 use ggez::nalgebra as na;
+use ggez::input;
 use std::f32::consts::PI;
 use std::collections::HashSet;
 
 struct MainState {
     bodies: Vec<Body>,
-    screen_width: u32,
-    screen_height: u32,
+    screen_width: f32,
+    screen_height: f32,
     current_rad: f32,
     mouse_down: bool,
     start_point: Point2,
     zoom: f32,
+    offset: Point2,
 }
 
 const G: f32 = 6.674;
 
 impl MainState {
-    fn new(ctx: &mut Context) -> GameResult<MainState> {
+    fn new(ctx: &mut Context) -> Self {
         let width = ctx.conf.window_mode.width as f32;
         let height = ctx.conf.window_mode.height as f32;
         let bodies = vec![
             Body::new(
                 Point2::new(width/2.0, height/2.0),
-                5000.0,
-                30.0,
+                30000.0,
+                50.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
@@ -34,7 +36,8 @@ impl MainState {
                 5.0,
                 Vector2::new(-3.0, -6.5)),
         ];
-        let s = MainState {
+
+        MainState {
             bodies,
             screen_width: ctx.conf.window_mode.width,
             screen_height: ctx.conf.window_mode.height,
@@ -42,8 +45,8 @@ impl MainState {
             mouse_down: false,
             start_point: Point2::new(0.0, 0.0),
             zoom: 1.0,
-        };
-        Ok(s)
+            offset: Point2::new(0.0, 0.0),
+        }
     }
 
     fn update_velocities_and_collide(&mut self){
@@ -151,7 +154,7 @@ impl Body {
 
 
 impl event::EventHandler for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
         self.update_velocities_and_collide();
         for i in 0..self.bodies.len(){
             self.bodies[i].update();
@@ -164,86 +167,89 @@ impl event::EventHandler for MainState {
         Ok(())
     }
 
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx);
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
         
 
         for i in 0..self.bodies.len(){
             let body = graphics::Mesh::new_circle(
                 ctx,
-                graphics::DrawMode::Fill,
-                Point2::new(self.bodies[i].pos.x * &self.zoom, self.bodies[i].pos.y * &self.zoom),
-                self.bodies[i].radius * &self.zoom,
+                graphics::DrawMode::fill(),
+                Point2::new(self.bodies[i].pos.x, self.bodies[i].pos.y),
+                self.bodies[i].radius,
                 2.0,
+                graphics::Color::new(1.0, 1.0, 1.0, 1.0),
             )?;
 
-            graphics::draw(ctx, &body, Point2::new(0.0, 0.0), 0.0);
+            let mut params = graphics::DrawParam::new();
+
+            params = params.dest(self.offset);
+            params = params.scale(Vector2::new(self.zoom, self.zoom));
+            
+            graphics::draw(ctx, &body, params);
         }
 
         graphics::present(ctx);
-        if ggez::timer::get_ticks(ctx) % 60 == 0{
-            println!("FPS: {}", ggez::timer::get_fps(ctx));
+        if ggez::timer::ticks(ctx) % 60 == 0{
+            // println!("FPS: {}", ggez::timer::fps(ctx));
         }
         Ok(())
     }
 
-    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
+    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
         self.mouse_down = true;
-        self.start_point = Point2::new(x as f32 * (1.0/&self.zoom), y as f32 * (1.0/&self.zoom));
+        let zoomed_x = (&x) * (1.0/self.zoom) - self.offset.x;
+        let zoomed_y = (&y) * (1.0/self.zoom) - self.offset.y;
+
+        println!("X: {}, Y: {}", zoomed_x, zoomed_y);
+        self.start_point = Point2::new(zoomed_x, zoomed_y);
     }
 
-    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: i32, y: i32) {
-        let zoomed_x = x as f32 * (1.0/&self.zoom);
-        let zoomed_y = y as f32 * (1.0/&self.zoom);
+    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
+        let zoomed_x = (&x) * (1.0/self.zoom) - self.offset.x;
+        let zoomed_y = (&y) * (1.0/self.zoom) - self.offset.y;
+        println!("X: {}, Y: {}", zoomed_x, zoomed_y);
 
         self.bodies.push(Body::new(
-                Point2::new(zoomed_x as f32, zoomed_y as f32),
-                self.current_rad.powf(2.0) * 1.0 * (1.0/&self.zoom),
+                Point2::new(zoomed_x, zoomed_y),
+                self.current_rad.powf(3.0) * 0.25 * (1.0/&self.zoom),
                 self.current_rad * (1.0/&self.zoom),
-                Vector2::new((zoomed_x as f32 - self.start_point.x)/10.0, (zoomed_y as f32 - self.start_point.y)/10.0 ),
+                Vector2::new((zoomed_x - self.start_point.x)/10.0, (zoomed_y - self.start_point.y)/10.0 ),
                 ));
-
-        println!("Mass: {}", self.current_rad * 1.0 * (1.0/&self.zoom));
 
         self.current_rad = 0.0;
         self.mouse_down = false;
     }
 
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, _y: i32) {
-        println!("Zoom: {}", self.zoom);
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) {
         self.zoom *= 1.0 + (_y as f32 * 0.1); 
+        println!("Zoom: {}", self.zoom);
+    }
+
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
+        self.offset.y += match keycode{
+            input::keyboard::KeyCode::Up => 50.0,
+            input::keyboard::KeyCode::Down => -50.0,
+            _ => 0.0,
+        };
+
+        self.offset.x += match keycode{
+            input::keyboard::KeyCode::Left => 50.0,
+            input::keyboard::KeyCode::Right => -50.0,
+            _ => 0.0,
+        };
+
+        println!("Offset: {} {}", self.offset.x, self.offset.y);
     }
 }
 
-pub fn main() {
-    let windowsetup = ggez::conf::WindowSetup{
-        title: "N-body Gravity Simulator".to_owned(),
-        icon: "".to_owned(),
-        resizable: false,
-        allow_highdpi: true,
-        samples: ggez::conf::NumSamples::One,
-    };
+pub fn main() -> GameResult{
+    let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Fish")
+        .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
+        .build()?;
+    let state = &mut MainState::new(ctx);
 
-    let windowmode = ggez::conf::WindowMode{
-        width: 1000,
-        height: 800,
-        borderless: true,
-        fullscreen_type: ggez::conf::FullscreenType::Off,
-        vsync:true,
-        min_width: 0,
-        max_width: 0,
-        min_height: 0,
-        max_height: 0,
-    };
-
-    let mut c = conf::Conf::new();
-    c.window_mode = windowmode;
-    c.window_setup = windowsetup;
-
-    let ctx = &mut Context::load_from_conf("Nbody Sim", "Fish", c).unwrap();
-    ggez::graphics::set_background_color(ctx, ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0));
-
-    let state = &mut MainState::new(ctx).unwrap();
-    event::run(ctx, state).unwrap();
+    event::run(ctx, event_loop, state)
 }
