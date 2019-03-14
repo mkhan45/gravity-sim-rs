@@ -26,8 +26,8 @@ impl MainState {
         let bodies = vec![
             Body::new(
                 Point2::new(width/2.0, height/2.0),
-                30000.0,
-                50.0,
+                300000.0,
+                100.0,
                 Vector2::new(0.0, 0.0)),
 
             Body::new(
@@ -170,6 +170,20 @@ impl event::EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
         
+        let info = format!(
+        "
+            Offset: {x}, {y}
+            Zoom: {zoom}
+        ",
+        x = self.offset.x, y = self.offset.y, zoom = self.zoom);
+
+        let text = graphics::Text::new(info);
+
+        let mut params = graphics::DrawParam::new();
+
+        params = params.dest(self.offset);
+        params = params.scale(Vector2::new(self.zoom, self.zoom));
+
 
         for i in 0..self.bodies.len(){
             let body = graphics::Mesh::new_circle(
@@ -181,13 +195,12 @@ impl event::EventHandler for MainState {
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0),
             )?;
 
-            let mut params = graphics::DrawParam::new();
-
-            params = params.dest(self.offset);
-            params = params.scale(Vector2::new(self.zoom, self.zoom));
-            
+                        
             graphics::draw(ctx, &body, params);
         }
+        
+
+        graphics::draw(ctx, &text, params.scale(Vector2::new(1.0, 1.0)));
 
         graphics::present(ctx);
         if ggez::timer::ticks(ctx) % 60 == 0{
@@ -198,21 +211,21 @@ impl event::EventHandler for MainState {
 
     fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
         self.mouse_down = true;
-        let zoomed_x = (&x) * (1.0/self.zoom) - self.offset.x;
-        let zoomed_y = (&y) * (1.0/self.zoom) - self.offset.y;
+        let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
+        let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
 
         println!("X: {}, Y: {}", zoomed_x, zoomed_y);
         self.start_point = Point2::new(zoomed_x, zoomed_y);
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
-        let zoomed_x = (&x) * (1.0/self.zoom) - self.offset.x;
-        let zoomed_y = (&y) * (1.0/self.zoom) - self.offset.y;
+        let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
+        let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
         println!("X: {}, Y: {}", zoomed_x, zoomed_y);
 
         self.bodies.push(Body::new(
                 Point2::new(zoomed_x, zoomed_y),
-                self.current_rad.powf(3.0) * 0.25 * (1.0/&self.zoom),
+                self.current_rad.powf(3.0) * 1.0 * (1.0/&self.zoom),
                 self.current_rad * (1.0/&self.zoom),
                 Vector2::new((zoomed_x - self.start_point.x)/10.0, (zoomed_y - self.start_point.y)/10.0 ),
                 ));
