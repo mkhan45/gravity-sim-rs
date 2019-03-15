@@ -19,6 +19,7 @@ struct MainState {
     density: f32,
     radius: f32,
     outline_pos: Point2,
+    trail_length: usize,
 }
 
 const G: f32 = 6.674;
@@ -37,11 +38,11 @@ impl MainState {
                 100.0,
                 Vector2::new(0.0, 0.0)),
 
-                Body::new(
-                    Point2::new(width/2.0 + 350.0, height/2.0),
-                    1.0,
-                    5.0,
-                    Vector2::new(-3.0, -6.5)),
+            Body::new(
+                Point2::new(width/2.0 + 350.0, height/2.0),
+                1.0,
+                5.0,
+                Vector2::new(-3.0, -6.5)),
         ];
 
         MainState {
@@ -55,9 +56,9 @@ impl MainState {
             density: 0.05,
             radius: 10.0,
             outline_pos: Point2::new(0.0, 0.0),
+            trail_length: 30,
         }
     }
-
 }
 
 
@@ -81,8 +82,9 @@ impl event::EventHandler for MainState {
             Zoom: {zoom}
             Density: {density}
             Radius: {radius}
-        ",
-        x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius);
+            Trail length: {trail_length}
+            ",
+            x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length);
 
         let text = graphics::Text::new(info);
 
@@ -93,6 +95,7 @@ impl event::EventHandler for MainState {
 
 
         for i in 0..self.bodies.len(){
+            self.bodies[i].trail_length = self.trail_length;
             let body = graphics::Mesh::new_circle(
                 ctx,
                 graphics::DrawMode::fill(),
@@ -102,8 +105,15 @@ impl event::EventHandler for MainState {
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0),
                 )?;
 
+                let trail = graphics::Mesh::new_line(
+                    ctx,
+                    &self.bodies[i].trail[..],
+                    0.25 * self.bodies[i].radius,
+                    graphics::Color::new(0.1, 0.1, 1.0, 0.8)
+                    )?;
 
-            graphics::draw(ctx, &body, params);
+                graphics::draw(ctx, &trail, params);
+                graphics::draw(ctx, &body, params);
         }
 
 
@@ -122,7 +132,7 @@ impl event::EventHandler for MainState {
 
         graphics::present(ctx);
         if ggez::timer::ticks(ctx) % 60 == 0{
-            // println!("FPS: {}", ggez::timer::fps(ctx));
+            println!("FPS: {}", ggez::timer::fps(ctx));
         }
         Ok(())
     }
@@ -203,6 +213,12 @@ impl event::EventHandler for MainState {
             input::keyboard::KeyCode::Q => 1.0,
             input::keyboard::KeyCode::A => -1.0,
             _ => 0.0,
+        };
+
+        self.trail_length = match keycode{
+            input::keyboard::KeyCode::E => self.trail_length + 1,
+            input::keyboard::KeyCode::D => self.trail_length - 1,
+            _ => self.trail_length,
         };
 
         if self.radius < 1.0 {self.radius = 1.0};

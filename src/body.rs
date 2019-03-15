@@ -11,6 +11,8 @@ pub struct Body {
     pub mass: f32,
     pub radius: f32,
     pub velocity: Vector2,
+    pub trail: Vec<Point2>,
+    pub trail_length: usize,
 }
 
 impl Body {
@@ -20,11 +22,20 @@ impl Body {
             mass: mass_assign,
             radius: rad,
             velocity: vel,
+            trail: vec![Point2::new(position.x + rad/2.0, position.y + rad/2.0)], //ggez doesn't like it when all the points are the same
+            trail_length: 120,
         }
     }
 
     pub fn update(&mut self){
+        self.trail.push(self.pos);
+        
+        if self.trail.len() > self.trail_length {
+            self.trail = self.trail.split_off(self.trail.len() - self.trail_length);
+        }
+
         self.pos.x += self.velocity.x;
         self.pos.y += self.velocity.y;
+
     }
 }
