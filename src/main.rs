@@ -209,7 +209,7 @@ impl event::EventHandler for MainState {
             ctx,
             graphics::DrawMode::fill(),
             self.outline_pos,
-            self.radius,
+            self.radius * self.zoom,
             2.0,
             graphics::Color::new(1.0, 1.0, 1.0, 0.25),
         )?;
