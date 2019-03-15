@@ -16,6 +16,7 @@ struct MainState {
     offset: Point2,
     density: f32,
     radius: f32,
+    outline_pos: Point2,
 }
 
 const G: f32 = 6.674;
@@ -48,6 +49,7 @@ impl MainState {
             offset: Point2::new(0.0, 0.0),
             density: 0.05,
             radius: 10.0,
+            outline_pos: Point2::new(0.0, 0.0),
         }
     }
 
@@ -190,7 +192,7 @@ impl event::EventHandler for MainState {
             let body = graphics::Mesh::new_circle(
                 ctx,
                 graphics::DrawMode::fill(),
-                Point2::new(self.bodies[i].pos.x, self.bodies[i].pos.y),
+                self.bodies[i].pos,
                 self.bodies[i].radius,
                 2.0,
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0),
@@ -202,6 +204,17 @@ impl event::EventHandler for MainState {
         
 
         graphics::draw(ctx, &text, graphics::DrawParam::new());
+
+        let outline = graphics::Mesh::new_circle(
+            ctx,
+            graphics::DrawMode::fill(),
+            self.outline_pos,
+            self.radius,
+            2.0,
+            graphics::Color::new(1.0, 1.0, 1.0, 0.25),
+        )?;
+
+        graphics::draw(ctx, &outline, graphics::DrawParam::new());
 
         graphics::present(ctx);
         if ggez::timer::ticks(ctx) % 60 == 0{
@@ -225,7 +238,7 @@ impl event::EventHandler for MainState {
                 self.bodies = self.bodies.iter()
                     .filter_map(|body| {
                         let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
-                        if(distance(&mouse_pointer, &body.pos) > body.radius){
+                        if distance(&mouse_pointer, &body.pos) > body.radius {
                             Some(body.clone())
                         }else {
                             None
@@ -287,8 +300,13 @@ impl event::EventHandler for MainState {
             input::keyboard::KeyCode::A => -1.0,
             _ => 0.0,
         };
-
+        
+        if self.radius < 1.0 {self.radius = 1.0};
         println!("Offset: {} {}", self.offset.x, self.offset.y);
+    }
+
+    fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
+        self.outline_pos = Point2::new(_x, _y);
     }
 }
 
