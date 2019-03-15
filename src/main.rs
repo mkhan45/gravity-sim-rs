@@ -11,10 +11,11 @@ struct MainState {
     screen_width: f32,
     screen_height: f32,
     current_rad: f32,
-    mouse_down: bool,
     start_point: Point2,
     zoom: f32,
     offset: Point2,
+    density: f32,
+    radius: f32,
 }
 
 const G: f32 = 6.674;
@@ -42,10 +43,11 @@ impl MainState {
             screen_width: ctx.conf.window_mode.width,
             screen_height: ctx.conf.window_mode.height,
             current_rad: 0.0,
-            mouse_down: false,
             start_point: Point2::new(0.0, 0.0),
             zoom: 1.0,
             offset: Point2::new(0.0, 0.0),
+            density: 0.05,
+            radius: 10.0,
         }
     }
 
@@ -160,9 +162,6 @@ impl event::EventHandler for MainState {
             self.bodies[i].update();
         }
 
-        if self.mouse_down {
-            self.current_rad += 0.2;
-        } 
 
         Ok(())
     }
@@ -174,8 +173,10 @@ impl event::EventHandler for MainState {
         "
             Offset: {x}, {y}
             Zoom: {zoom}
+            Density: {density}
+            Radius: {radius}
         ",
-        x = self.offset.x, y = self.offset.y, zoom = self.zoom);
+        x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius);
 
         let text = graphics::Text::new(info);
 
@@ -210,12 +211,31 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
-        self.mouse_down = true;
         let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
         let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
 
-        println!("X: {}, Y: {}", zoomed_x, zoomed_y);
-        self.start_point = Point2::new(zoomed_x, zoomed_y);
+        match button {
+            event::MouseButton::Left => {
+                println!("X: {}, Y: {}", zoomed_x, zoomed_y);
+                self.start_point = Point2::new(zoomed_x, zoomed_y);
+            },
+
+            event::MouseButton::Right => {
+                println!("Removing body at {} {}", x, y);
+                self.bodies = self.bodies.iter()
+                    .filter_map(|body| {
+                        let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
+                        if(distance(&mouse_pointer, &body.pos) > body.radius){
+                            Some(body.clone())
+                        }else {
+                            None
+                        }
+                    })
+                    .collect();
+            }
+
+            _ => {},
+        };
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
@@ -223,15 +243,18 @@ impl event::EventHandler for MainState {
         let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
         println!("X: {}, Y: {}", zoomed_x, zoomed_y);
 
-        self.bodies.push(Body::new(
-                Point2::new(zoomed_x, zoomed_y),
-                self.current_rad.powf(3.0) * 1.0 * (1.0/&self.zoom),
-                self.current_rad * (1.0/&self.zoom),
-                Vector2::new((zoomed_x - self.start_point.x)/10.0, (zoomed_y - self.start_point.y)/10.0 ),
-                ));
+        match button {
+            event::MouseButton::Left => {
+                self.bodies.push(Body::new(
+                        Point2::new(zoomed_x, zoomed_y),
+                        self.radius.powf(3.0) * self.density,
+                        self.radius,
+                        Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
+                        ));
+            },
 
-        self.current_rad = 0.0;
-        self.mouse_down = false;
+            _ => {},
+        }
     }
 
 
@@ -250,6 +273,18 @@ impl event::EventHandler for MainState {
         self.offset.x += match keycode{
             input::keyboard::KeyCode::Left => 50.0,
             input::keyboard::KeyCode::Right => -50.0,
+            _ => 0.0,
+        };
+
+        self.density += match keycode{
+            input::keyboard::KeyCode::W => 0.05,
+            input::keyboard::KeyCode::S => -0.05,
+            _ => 0.0,
+        };
+
+        self.radius += match keycode{
+            input::keyboard::KeyCode::Q => 1.0,
+            input::keyboard::KeyCode::A => -1.0,
             _ => 0.0,
         };
 
