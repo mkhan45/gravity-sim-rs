@@ -105,15 +105,18 @@ impl event::EventHandler for MainState {
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0),
                 )?;
 
+            if self.trail_length > 1 {
                 let trail = graphics::Mesh::new_line(
                     ctx,
-                    &self.bodies[i].trail[..],
+                    &self.bodies[i].trail.as_slices().0,
                     0.25 * self.bodies[i].radius,
                     graphics::Color::new(0.1, 0.1, 1.0, 0.8)
                     )?;
 
                 graphics::draw(ctx, &trail, params);
-                graphics::draw(ctx, &body, params);
+            }
+            graphics::draw(ctx, &body, params);
+
         }
 
 
@@ -173,7 +176,7 @@ impl event::EventHandler for MainState {
         match button {
             event::MouseButton::Left => {
                 self.bodies.push(Body::new(
-                        Point2::new(zoomed_x, zoomed_y),
+                        self.start_point,
                         self.radius.powf(3.0) * self.density,
                         self.radius,
                         Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
@@ -217,12 +220,11 @@ impl event::EventHandler for MainState {
 
         self.trail_length = match keycode{
             input::keyboard::KeyCode::E => self.trail_length + 1,
-            input::keyboard::KeyCode::D => self.trail_length - 1,
+            input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
             _ => self.trail_length,
         };
 
         if self.radius < 1.0 {self.radius = 1.0};
-        println!("Offset: {} {}", self.offset.x, self.offset.y);
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
