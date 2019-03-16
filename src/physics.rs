@@ -3,6 +3,8 @@ use std::f32::consts::PI;
 use crate::body::Body;
 use std::collections::HashSet;
 
+use rayon::prelude::*;
+
 const G: f32 = 6.674;
 
 type Point2 = na::Point2<f32>;
@@ -75,7 +77,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
             }
         }
 
-        bodies = bodies.iter()
+        bodies = bodies.par_iter()
             .enumerate()
             .filter_map(|(index, body)| {
                 if collision_blacklist.contains(&index) {

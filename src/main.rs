@@ -8,6 +8,8 @@ use body::Body;
 mod physics;
 use physics::*;
 
+use rayon::prelude::*;
+
 
 
 struct MainState {
@@ -162,7 +164,7 @@ impl event::EventHandler for MainState {
 
             event::MouseButton::Right => {
                 println!("Removing body at {} {}", zoomed_x, zoomed_y);
-                self.bodies = self.bodies.iter()
+                self.bodies = self.bodies.par_iter()
                     .filter_map(|body| {
                         let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
                         if distance(&mouse_pointer, &body.pos) > body.radius {
@@ -237,12 +239,14 @@ impl event::EventHandler for MainState {
         match keycode{
             input::keyboard::KeyCode::Space => {
                 self.paused = !self.paused;
-                // self.trail_length = 0;
             },
 
             input::keyboard::KeyCode::G => {
-                self.bodies.append(&mut grid(&self.radius, &self.density));
+                self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom));
             }
+
+            input::keyboard::KeyCode::R => self.bodies = Vec::new(),
+
             _ => {},
         };
 
@@ -266,12 +270,12 @@ pub fn main() -> GameResult{
     event::run(ctx, event_loop, state)
 }
 
-fn grid(radius: &f32, density: &f32) -> Vec<Body> {
+fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
     let mut new_bodies: Vec<Body> = Vec::new();
 
     (1..=10).for_each(|y|{
         (1..=10).for_each(|x| {
-            let point = Point2::new(x as f32 * radius * 50.0, y as f32 * radius * 50.0);
+            let point = Point2::new((x as f32 * radius * 50.0) - (start.x * (1.0/zoom)), (y as f32 * radius * 50.0) - (start.y * (1.0/zoom)));
             new_bodies.push(Body::new(
                     point,
                     radius.powf(3.0) * density,
