@@ -246,7 +246,10 @@ impl event::EventHandler for MainState {
         };
         
         match keycode{
-            input::keyboard::KeyCode::Space => self.paused = !self.paused,
+            input::keyboard::KeyCode::Space => {
+                self.paused = !self.paused;
+                self.trail_length = 0;
+            },
             _ => {},
         };
 
