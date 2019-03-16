@@ -20,6 +20,7 @@ struct MainState {
     mouse_pos: Point2,
     trail_length: usize,
     mouse_pressed: bool,
+    paused: bool,
 }
 
 type Point2 = na::Point2<f32>;
@@ -36,12 +37,6 @@ impl MainState {
                 300000.0,
                 100.0,
                 Vector2::new(0.0, 0.0)),
-
-                Body::new(
-                    Point2::new(width/2.0 + 350.0, height/2.0),
-                    1.0,
-                    5.0,
-                    Vector2::new(-3.0, -6.5)),
         ];
 
         MainState {
@@ -54,6 +49,7 @@ impl MainState {
             mouse_pos: Point2::new(0.0, 0.0),
             trail_length: 30,
             mouse_pressed: false,
+            paused: false,
         }
     }
 }
@@ -61,9 +57,12 @@ impl MainState {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        self.bodies = update_velocities_and_collide(&self.bodies);
-        for i in 0..self.bodies.len(){
-            self.bodies[i].update();
+        
+        if !self.paused{
+            self.bodies = update_velocities_and_collide(&self.bodies);
+            for i in 0..self.bodies.len(){
+                self.bodies[i].update();
+            }
         }
 
         Ok(())
@@ -83,7 +82,7 @@ impl event::EventHandler for MainState {
             x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length);
 
         let text = graphics::Text::new(info);
-        graphics::draw(ctx, &text, graphics::DrawParam::new());
+        graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
 
         let mut params = graphics::DrawParam::new();
 
@@ -100,17 +99,17 @@ impl event::EventHandler for MainState {
                     graphics::Color::new(0.1, 0.25, 1.0, 0.5)
                     );
 
-            let trail = match trail {
-                Ok(line) => line,
-                Err(_error) => {graphics::Mesh::new_circle(
-                        ctx,
-                        graphics::DrawMode::fill(),
-                        self.bodies[i].pos,
-                        1.0,
-                        1.0,
-                        graphics::Color::new(1.0, 1.0, 1.0, 0.0),
-                        )?},
-            };
+                let trail = match trail {
+                    Ok(line) => line,
+                    Err(_error) => {graphics::Mesh::new_circle(
+                            ctx,
+                            graphics::DrawMode::fill(),
+                            self.bodies[i].pos,
+                            1.0,
+                            1.0,
+                            graphics::Color::new(1.0, 1.0, 1.0, 0.0),
+                            )?},
+                };
 
                 graphics::draw(ctx, &trail, params).expect("error drawing trail");
             }
@@ -136,7 +135,7 @@ impl event::EventHandler for MainState {
                 graphics::Color::new(1.0, 1.0, 1.0, 0.8),
                 )?;
 
-            graphics::draw(ctx, &line, params);
+            graphics::draw(ctx, &line, params).expect("error drawing preview line");
         }
 
 
@@ -168,6 +167,7 @@ impl event::EventHandler for MainState {
         match button {
             event::MouseButton::Left => {
                 self.start_point = Point2::new(zoomed_x, zoomed_y);
+                self.mouse_pressed = true;
             },
 
             event::MouseButton::Right => {
@@ -187,7 +187,6 @@ impl event::EventHandler for MainState {
             _ => {},
         };
 
-        self.mouse_pressed = true;
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
@@ -244,6 +243,11 @@ impl event::EventHandler for MainState {
             input::keyboard::KeyCode::E => self.trail_length + 1,
             input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
             _ => self.trail_length,
+        };
+        
+        match keycode{
+            input::keyboard::KeyCode::Space => self.paused = !self.paused,
+            _ => {},
         };
 
         if self.radius < 1.0 {self.radius = 1.0};
