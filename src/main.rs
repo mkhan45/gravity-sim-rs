@@ -12,9 +12,6 @@ use physics::*;
 
 struct MainState {
     bodies: Vec<Body>,
-    screen_width: f32,
-    screen_height: f32,
-    current_rad: f32,
     start_point: Point2,
     zoom: f32,
     offset: Point2,
@@ -25,7 +22,6 @@ struct MainState {
     mouse_pressed: bool,
 }
 
-const G: f32 = 6.674;
 type Point2 = na::Point2<f32>;
 type Vector2 = na::Vector2<f32>;
 
@@ -41,18 +37,15 @@ impl MainState {
                 100.0,
                 Vector2::new(0.0, 0.0)),
 
-            Body::new(
-                Point2::new(width/2.0 + 350.0, height/2.0),
-                1.0,
-                5.0,
-                Vector2::new(-3.0, -6.5)),
+                Body::new(
+                    Point2::new(width/2.0 + 350.0, height/2.0),
+                    1.0,
+                    5.0,
+                    Vector2::new(-3.0, -6.5)),
         ];
 
         MainState {
             bodies,
-            screen_width: ctx.conf.window_mode.width,
-            screen_height: ctx.conf.window_mode.height,
-            current_rad: 0.0,
             start_point: Point2::new(0.0, 0.0),
             zoom: 1.0,
             offset: Point2::new(0.0, 0.0),
@@ -73,7 +66,6 @@ impl event::EventHandler for MainState {
             self.bodies[i].update();
         }
 
-
         Ok(())
     }
 
@@ -91,6 +83,7 @@ impl event::EventHandler for MainState {
             x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length);
 
         let text = graphics::Text::new(info);
+        graphics::draw(ctx, &text, graphics::DrawParam::new());
 
         let mut params = graphics::DrawParam::new();
 
@@ -107,17 +100,17 @@ impl event::EventHandler for MainState {
                     graphics::Color::new(0.1, 0.25, 1.0, 0.5)
                     );
 
-                let trail = match trail {
-                    Ok(line) => line,
-                    Err(error) => {graphics::Mesh::new_circle(
-                            ctx,
-                            graphics::DrawMode::fill(),
-                            self.bodies[i].pos,
-                            1.0,
-                            1.0,
-                            graphics::Color::new(1.0, 1.0, 1.0, 0.0),
-                            )?},
-                };
+            let trail = match trail {
+                Ok(line) => line,
+                Err(_error) => {graphics::Mesh::new_circle(
+                        ctx,
+                        graphics::DrawMode::fill(),
+                        self.bodies[i].pos,
+                        1.0,
+                        1.0,
+                        graphics::Color::new(1.0, 1.0, 1.0, 0.0),
+                        )?},
+            };
 
                 graphics::draw(ctx, &trail, params).expect("error drawing trail");
             }
@@ -146,13 +139,12 @@ impl event::EventHandler for MainState {
             graphics::draw(ctx, &line, params);
         }
 
-        graphics::draw(ctx, &text, graphics::DrawParam::new());
 
         let outline = graphics::Mesh::new_circle( //draw outline
             ctx,
             graphics::DrawMode::fill(),
             if self.mouse_pressed {self.start_point} else {self.mouse_pos},
-            self.radius * self.zoom,
+            self.radius,
             2.0,
             graphics::Color::new(1.0, 1.0, 1.0, 0.25),
             )?;
@@ -223,7 +215,7 @@ impl event::EventHandler for MainState {
         self.zoom *= 1.0 + (_y as f32 * 0.1); 
     }
 
-    fn key_down_event(&mut self, ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
+    fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
         self.offset.y += match keycode{
             input::keyboard::KeyCode::Up => 50.0,
             input::keyboard::KeyCode::Down => -50.0,
