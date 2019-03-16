@@ -57,7 +57,6 @@ impl MainState {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        
         if !self.paused{
             self.bodies = update_velocities_and_collide(&self.bodies);
             for i in 0..self.bodies.len(){
@@ -99,19 +98,10 @@ impl event::EventHandler for MainState {
                     graphics::Color::new(0.1, 0.25, 1.0, 0.5)
                     );
 
-                let trail = match trail {
-                    Ok(line) => line,
-                    Err(_error) => {graphics::Mesh::new_circle(
-                            ctx,
-                            graphics::DrawMode::fill(),
-                            self.bodies[i].pos,
-                            1.0,
-                            1.0,
-                            graphics::Color::new(1.0, 1.0, 1.0, 0.0),
-                            )?},
+                match trail {
+                    Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
+                    Err(_error) => {},
                 };
-
-                graphics::draw(ctx, &trail, params).expect("error drawing trail");
             }
             self.bodies[i].trail_length = self.trail_length;
 
@@ -247,7 +237,7 @@ impl event::EventHandler for MainState {
         match keycode{
             input::keyboard::KeyCode::Space => {
                 self.paused = !self.paused;
-                self.trail_length = 0;
+                // self.trail_length = 0;
             },
 
             input::keyboard::KeyCode::G => {

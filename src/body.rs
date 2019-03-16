@@ -20,6 +20,7 @@ impl Body {
     pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
         let mut trail_vec = VecDeque::new();
         trail_vec.push_back(Point2::new(position.x + rad/2.0, position.y + rad/2.0));
+        trail_vec.push_back(Point2::new(position.x, position.y));
         Body {
             pos: position,
             mass: mass_assign,
@@ -34,7 +35,7 @@ impl Body {
         self.trail.push_back(self.pos);
         
         if self.trail.len() > self.trail_length {
-            for i in 0..(self.trail.len() - self.trail_length - 1) {
+            for _i in 0..(self.trail.len() - self.trail_length - 1) {
                 self.trail.pop_front();
             }
         }
