@@ -186,7 +186,6 @@ impl event::EventHandler for MainState {
 
             _ => {},
         };
-
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
@@ -250,6 +249,10 @@ impl event::EventHandler for MainState {
                 self.paused = !self.paused;
                 self.trail_length = 0;
             },
+
+            input::keyboard::KeyCode::G => {
+                self.bodies = grid();
+            }
             _ => {},
         };
 
@@ -271,4 +274,21 @@ pub fn main() -> GameResult{
     let state = &mut MainState::new(ctx);
 
     event::run(ctx, event_loop, state)
+}
+
+fn grid() -> Vec<Body> {
+    let mut new_bodies: Vec<Body> = Vec::new();
+
+    (1..=10).for_each(|y|{
+        (1..=10).for_each(|x| {
+            let point = Point2::new(x as f32 * 1000.0, y as f32 * 1000.0);
+            new_bodies.push(Body::new(
+                    point,
+                    10.0,
+                    10.0,
+                    Vector2::new(0.0, 0.0)));
+        });
+    });
+
+    new_bodies
 }
