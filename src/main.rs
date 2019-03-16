@@ -251,7 +251,7 @@ impl event::EventHandler for MainState {
             },
 
             input::keyboard::KeyCode::G => {
-                self.bodies.append(&mut grid());
+                self.bodies.append(&mut grid(&self.radius, &self.density));
             }
             _ => {},
         };
@@ -276,16 +276,16 @@ pub fn main() -> GameResult{
     event::run(ctx, event_loop, state)
 }
 
-fn grid() -> Vec<Body> {
+fn grid(radius: &f32, density: &f32) -> Vec<Body> {
     let mut new_bodies: Vec<Body> = Vec::new();
 
     (1..=10).for_each(|y|{
         (1..=10).for_each(|x| {
-            let point = Point2::new(x as f32 * 1000.0, y as f32 * 1000.0);
+            let point = Point2::new(x as f32 * radius * 50.0, y as f32 * radius * 50.0);
             new_bodies.push(Body::new(
                     point,
-                    10.0,
-                    10.0,
+                    radius.powf(3.0) * density,
+                    *radius,
                     Vector2::new(0.0, 0.0)));
         });
     });

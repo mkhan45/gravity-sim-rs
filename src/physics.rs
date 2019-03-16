@@ -64,7 +64,6 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
                     let angle = angle(&other_body.pos, &current_body.pos);
                     
                     if r <= other_body.radius + current_body.radius && !collision_blacklist.contains(&current_body_i){
-                        println!("Collision");
                         collision_blacklist.insert(current_body_i);
                         collision_blacklist.insert(other_body_i);
                         collision_bodies.push(collide(&current_body, &other_body));
