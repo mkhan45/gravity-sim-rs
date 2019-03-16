@@ -8,6 +8,8 @@ use body::Body;
 mod physics;
 use physics::*;
 
+
+
 struct MainState {
     bodies: Vec<Body>,
     screen_width: f32,
@@ -136,6 +138,7 @@ impl event::EventHandler for MainState {
         graphics::present(ctx);
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
+            println!("Bodies: {}", self.bodies.len());
         }
         Ok(())
     }
@@ -146,7 +149,6 @@ impl event::EventHandler for MainState {
 
         match button {
             event::MouseButton::Left => {
-                println!("X: {}, Y: {}", zoomed_x, zoomed_y);
                 self.start_point = Point2::new(zoomed_x, zoomed_y);
             },
 
@@ -171,7 +173,6 @@ impl event::EventHandler for MainState {
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
         let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
         let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
-        println!("X: {}, Y: {}", zoomed_x, zoomed_y);
 
         match button {
             event::MouseButton::Left => {
@@ -190,7 +191,6 @@ impl event::EventHandler for MainState {
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) {
         self.zoom *= 1.0 + (_y as f32 * 0.1); 
-        println!("Zoom: {}", self.zoom);
     }
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){

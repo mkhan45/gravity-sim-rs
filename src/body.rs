@@ -25,7 +25,6 @@ impl Body {
             mass: mass_assign,
             radius: rad,
             velocity: vel,
-            // trail: vec![Point2::new(position.x + rad/2.0, position.y + rad/2.0)], //ggez doesn't like it when all the points are the same
             trail: trail_vec,
             trail_length: 120,
         }
@@ -35,7 +34,6 @@ impl Body {
         self.trail.push_back(self.pos);
         
         if self.trail.len() > self.trail_length {
-            // self.trail = self.trail.split_off(self.trail.len() - self.trail_length);
             for i in 0..(self.trail.len() - self.trail_length - 1) {
                 self.trail.pop_front();
             }
