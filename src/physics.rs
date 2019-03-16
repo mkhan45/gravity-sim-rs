@@ -17,12 +17,20 @@ pub fn collide(body1: &Body, body2: &Body) -> Body{
 
     let total_momentum = Vector2::new(body1_momentum.x + body2_momentum.x, body1_momentum.y + body2_momentum.y);
 
+    
+    let volume_1 = 4.0/3.0 * PI * body1.radius.powf(3.0);
+    let volume_2 = 4.0/3.0 * PI * body2.radius.powf(3.0);
+
     let total_mass = body1.mass + body2.mass;
+
+    let total_volume = volume_1 + volume_2;
+
+    let new_rad = (((3.0/4.0)*total_volume)/PI).powf(1.0/3.0);
 
     Body::new(
         if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)},
-        body1.mass + body2.mass,
-        body1.radius + body2.radius,
+        total_mass,
+        new_rad,
         Vector2::new(total_momentum.x/total_mass, total_momentum.y/total_mass),
     )
 }

@@ -251,7 +251,7 @@ impl event::EventHandler for MainState {
             },
 
             input::keyboard::KeyCode::G => {
-                self.bodies = grid();
+                self.bodies.append(&mut grid());
             }
             _ => {},
         };
