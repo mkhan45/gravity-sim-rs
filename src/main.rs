@@ -20,8 +20,9 @@ struct MainState {
     offset: Point2,
     density: f32,
     radius: f32,
-    outline_pos: Point2,
+    mouse_pos: Point2,
     trail_length: usize,
+    mouse_pressed: bool,
 }
 
 const G: f32 = 6.674;
@@ -57,8 +58,9 @@ impl MainState {
             offset: Point2::new(0.0, 0.0),
             density: 0.05,
             radius: 10.0,
-            outline_pos: Point2::new(0.0, 0.0),
+            mouse_pos: Point2::new(0.0, 0.0),
             trail_length: 30,
+            mouse_pressed: false,
         }
     }
 }
@@ -96,23 +98,13 @@ impl event::EventHandler for MainState {
         params = params.scale(Vector2::new(self.zoom, self.zoom));
 
 
-        for i in 0..self.bodies.len(){
-            self.bodies[i].trail_length = self.trail_length;
-            let body = graphics::Mesh::new_circle(
-                ctx,
-                graphics::DrawMode::fill(),
-                self.bodies[i].pos,
-                self.bodies[i].radius,
-                2.0,
-                graphics::Color::new(1.0, 1.0, 1.0, 1.0),
-                )?;
-
-            if self.trail_length > 1 {
+        for i in 0..self.bodies.len(){ //draw trail and bodies
+            if self.trail_length > 1 { //trail
                 let trail = graphics::Mesh::new_line(
                     ctx,
                     &self.bodies[i].trail.as_slices().0,
                     0.25 * self.bodies[i].radius,
-                    graphics::Color::new(0.1, 0.1, 1.0, 0.8)
+                    graphics::Color::new(0.1, 0.25, 1.0, 0.5)
                     );
 
                 let trail = match trail {
@@ -121,35 +113,54 @@ impl event::EventHandler for MainState {
                             ctx,
                             graphics::DrawMode::fill(),
                             self.bodies[i].pos,
-                            self.bodies[i].radius/2.0,
+                            1.0,
                             1.0,
                             graphics::Color::new(1.0, 1.0, 1.0, 0.0),
                             )?},
                 };
 
                 graphics::draw(ctx, &trail, params).expect("error drawing trail");
-                
             }
-            graphics::draw(ctx, &body, params).expect("error drawing body");
+            self.bodies[i].trail_length = self.trail_length;
 
+            let body = graphics::Mesh::new_circle( //draw body
+                ctx,
+                graphics::DrawMode::fill(),
+                self.bodies[i].pos,
+                self.bodies[i].radius,
+                2.0,
+                graphics::Color::new(1.0, 1.0, 1.0, 1.0),
+                )?;
+
+            graphics::draw(ctx, &body, params).expect("error drawing body");
         }
 
+        if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw vector
+            let line = graphics::Mesh::new_line(
+                ctx,
+                &vec![self.start_point, self.mouse_pos][..],
+                0.25 * self.radius,
+                graphics::Color::new(1.0, 1.0, 1.0, 0.8),
+                )?;
+
+            graphics::draw(ctx, &line, params);
+        }
 
         graphics::draw(ctx, &text, graphics::DrawParam::new());
 
-        let outline = graphics::Mesh::new_circle(
+        let outline = graphics::Mesh::new_circle( //draw outline
             ctx,
             graphics::DrawMode::fill(),
-            self.outline_pos,
+            if self.mouse_pressed {self.start_point} else {self.mouse_pos},
             self.radius * self.zoom,
             2.0,
             graphics::Color::new(1.0, 1.0, 1.0, 0.25),
             )?;
 
-        graphics::draw(ctx, &outline, graphics::DrawParam::new()).expect("error drawing outline");
+        graphics::draw(ctx, &outline, params).expect("error drawing outline");
 
         graphics::present(ctx).expect("error rendering");
-        
+
 
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
@@ -168,7 +179,7 @@ impl event::EventHandler for MainState {
             },
 
             event::MouseButton::Right => {
-                println!("Removing body at {} {}", x, y);
+                println!("Removing body at {} {}", zoomed_x, zoomed_y);
                 self.bodies = self.bodies.iter()
                     .filter_map(|body| {
                         let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
@@ -183,6 +194,8 @@ impl event::EventHandler for MainState {
 
             _ => {},
         };
+
+        self.mouse_pressed = true;
     }
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
@@ -201,6 +214,8 @@ impl event::EventHandler for MainState {
 
             _ => {},
         }
+
+        self.mouse_pressed = false;
     }
 
 
@@ -243,7 +258,9 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
-        self.outline_pos = Point2::new(_x, _y);
+        let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom);
+        let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
+        self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
     }
 }
 
