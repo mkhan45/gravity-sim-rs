@@ -19,3 +19,7 @@ E/D to increase/decrease trail length (removing trails increases performance by 
 Left click to place a body, dragging before releasing makes an initial velocity vector.
 
 Right click over a body to delete it.
+
+G creates a 10x10 grid of bodies with the specified radii and densities.
+
+R to reset.
