@@ -113,11 +113,24 @@ impl event::EventHandler for MainState {
                     &self.bodies[i].trail.as_slices().0,
                     0.25 * self.bodies[i].radius,
                     graphics::Color::new(0.1, 0.1, 1.0, 0.8)
-                    )?;
+                    );
 
-                graphics::draw(ctx, &trail, params);
+                let trail = match trail {
+                    Ok(line) => line,
+                    Err(error) => {graphics::Mesh::new_circle(
+                            ctx,
+                            graphics::DrawMode::fill(),
+                            self.bodies[i].pos,
+                            self.bodies[i].radius/2.0,
+                            1.0,
+                            graphics::Color::new(1.0, 1.0, 1.0, 0.0),
+                            )?},
+                };
+
+                graphics::draw(ctx, &trail, params).expect("error drawing trail");
+                
             }
-            graphics::draw(ctx, &body, params);
+            graphics::draw(ctx, &body, params).expect("error drawing body");
 
         }
 
@@ -133,9 +146,11 @@ impl event::EventHandler for MainState {
             graphics::Color::new(1.0, 1.0, 1.0, 0.25),
             )?;
 
-        graphics::draw(ctx, &outline, graphics::DrawParam::new());
+        graphics::draw(ctx, &outline, graphics::DrawParam::new()).expect("error drawing outline");
 
-        graphics::present(ctx);
+        graphics::present(ctx).expect("error rendering");
+        
+
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
             println!("Bodies: {}", self.bodies.len());
