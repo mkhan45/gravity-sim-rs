@@ -10,6 +10,7 @@ mod physics;
 use physics::*;
 
 use rayon::prelude::*;
+use std::thread;
 
 
 
@@ -67,7 +68,6 @@ impl event::EventHandler for MainState {
                 self.bodies[i].update();
             }
         }
-
         Ok(())
     }
 
@@ -204,8 +204,8 @@ impl event::EventHandler for MainState {
     }
 
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) {
-        self.zoom *= 1.0 + (_y as f32 * 0.1); 
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) {
+        self.zoom *= 1.0 + (y as f32 * 0.1); 
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
@@ -238,7 +238,7 @@ impl event::EventHandler for MainState {
             input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
             _ => self.trail_length,
         };
-        
+
         match keycode{
             input::keyboard::KeyCode::Space => {
                 self.paused = !self.paused;
@@ -269,7 +269,7 @@ pub fn main() -> GameResult{
         .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
         .build()?;
     let state = &mut MainState::new(ctx);
-    
+
     microprofile::init();
     microprofile::set_enable_all_groups(true);
     event::run(ctx, event_loop, state)

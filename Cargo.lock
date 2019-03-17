@@ -1004,6 +1004,14 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "microprofile"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "cc 1.0.30 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "minimp3"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1046,6 +1054,7 @@ name = "nbodyrs"
 version = "0.1.0"
 dependencies = [
  "ggez 0.5.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "microprofile 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2120,6 +2129,7 @@ dependencies = [
 "checksum memchr 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2efc7bc57c883d4a4d6e3246905283d8dae951bb3bd32f49d6ef297f546e1c39"
 "checksum memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6585fd95e7bb50d6cc31e20d4cf9afb4e2ba16c5846fc76793f11218da9c475b"
 "checksum memoffset 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0f9dc261e2b62d7a622bf416ea3c5245cdd5d9a7fcc428c0d06804dfce1775b3"
+"checksum microprofile 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "4a7fa53f10a439cb1be3386c92aabc9ecadeb7a82e28e393444062752d568c25"
 "checksum minimp3 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f41696ddc46df17ef8e42f145baa2805b1e048c59d2321292acfe4a1daa58244"
 "checksum minimp3-sys 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c109ae05c00ad6e3a53fab101e2f234545bdd010f0fffd399355efaf70817817"
 "checksum mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c9e6c29b4bb0155117ea1a61520406c975673ee71b0287323f06d1a8d69c4a7c"
