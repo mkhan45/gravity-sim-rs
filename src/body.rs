@@ -32,8 +32,10 @@ impl Body {
     }
 
     pub fn update(&mut self){
+        microprofile::scope!("Update", "Bodies");
+
         self.trail.push_back(self.pos);
-        
+               
         if self.trail.len() > self.trail_length {
             for _i in 0..(self.trail.len() - self.trail_length - 1) {
                 self.trail.pop_front();

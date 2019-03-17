@@ -1,3 +1,4 @@
+#[macro_use] extern crate microprofile;
 extern crate ggez;
 use ggez::*; use ggez::graphics; use ggez::nalgebra as na;
 use ggez::input;
@@ -59,6 +60,7 @@ impl MainState {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        microprofile::flip();
         if !self.paused{
             self.bodies = update_velocities_and_collide(&self.bodies);
             for i in 0..self.bodies.len(){
@@ -70,6 +72,7 @@ impl event::EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        microprofile::scope!("Draw", "Main");
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
 
         let info = format!(
@@ -266,7 +269,9 @@ pub fn main() -> GameResult{
         .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
         .build()?;
     let state = &mut MainState::new(ctx);
-
+    
+    microprofile::init();
+    microprofile::set_enable_all_groups(true);
     event::run(ctx, event_loop, state)
 }
 

@@ -54,6 +54,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
         let mut bodies = bodies.clone();
         let mut collision_blacklist = HashSet::new();
         let mut collision_bodies = Vec::new();
+        microprofile::scope!("Update velocities/collide", "Calculations");
 
         for current_body_i in 0..bodies.len(){
             for other_body_i in 0..bodies.len(){
