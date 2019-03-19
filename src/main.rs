@@ -143,7 +143,7 @@ impl event::EventHandler for MainState {
             graphics::draw(ctx, &body, params).expect("error drawing body");
         }
 
-        if self.mouse_pressed { //prediction
+        if self.mouse_pressed && self.predict_speed != 0{ //prediction
             if self.predict_body.trail.len() > 2{
                 let trail = graphics::Mesh::new_line(
                         ctx,

@@ -16,6 +16,8 @@ W/S to increase/decrease density (try making it negative)
 
 E/D to increase/decrease trail length (removing trails increases performance by a lot)
 
+X/Z to increase/decrease prediction speed, setting it to 0 turns of predictions.
+
 Left click to place a body, dragging before releasing makes an initial velocity vector.
 
 Right click over a body to delete it.
