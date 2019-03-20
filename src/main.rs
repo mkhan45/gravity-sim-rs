@@ -76,7 +76,7 @@ impl event::EventHandler for MainState {
         
         for i in (0..self.predict_speed){
             if self.mouse_pressed{
-                self.predict_body.past_accel += self.bodies.iter()
+                self.predict_body.past_accel = self.bodies.iter()
                     .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
                         let r = distance(&body.pos, &self.predict_body.pos);
                         let a_mag = (G*body.mass)/(r.powf(2.0));

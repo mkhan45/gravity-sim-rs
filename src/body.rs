@@ -18,8 +18,7 @@ pub struct Body {
     pub current_accel: Vector2,
 }
 
-impl Body {
-    pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
+impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
         let mut trail_vec = VecDeque::new();
         trail_vec.push_back(Point2::new(position.x + rad/2.0, position.y + rad/2.0));
         trail_vec.push_back(Point2::new(position.x, position.y));
@@ -47,8 +46,8 @@ impl Body {
         }
         
 
-        self.pos.x += self.velocity.x + (0.5 * self.current_accel.x);
-        self.pos.y += self.velocity.y + (0.5 * self.current_accel.y);
+        self.pos.x += self.velocity.x + (0.5 * self.past_accel.x);
+        self.pos.y += self.velocity.y + (0.5 * self.past_accel.y);
         
         self.velocity.x += (self.past_accel.x + self.current_accel.x)/2.0;
 
