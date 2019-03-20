@@ -72,8 +72,8 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
                         collision_bodies.push(collide(&current_body, &other_body));
                     }
 
-                    bodies[current_body_i].velocity.x += angle.cos() * a_mag;
-                    bodies[current_body_i].velocity.y += angle.sin() * a_mag;
+                    bodies[current_body_i].past_accel.x += angle.cos() * a_mag;
+                    bodies[current_body_i].past_accel.y += angle.sin() * a_mag;
                 }
             }
         }

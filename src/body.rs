@@ -14,6 +14,8 @@ pub struct Body {
     pub velocity: Vector2,
     pub trail: VecDeque<Point2>,
     pub trail_length: usize,
+    pub past_accel: Vector2,
+    pub current_accel: Vector2,
 }
 
 impl Body {
@@ -28,6 +30,8 @@ impl Body {
             velocity: vel,
             trail: trail_vec,
             trail_length: 120,
+            past_accel: Vector2::new(0.0, 0.0),
+            current_accel: Vector2::new(0.0, 0.0),
         }
     }
 
@@ -41,10 +45,16 @@ impl Body {
                 self.trail.pop_front();
             }
         }
+        
 
-        self.pos.x += self.velocity.x;
-        self.pos.y += self.velocity.y;
+        self.pos.x += self.velocity.x + (0.5 * self.current_accel.x);
+        self.pos.y += self.velocity.y + (0.5 * self.current_accel.y);
+        
+        self.velocity.x += (self.past_accel.x + self.current_accel.x)/2.0;
 
+        self.velocity.y += (self.past_accel.y + self.current_accel.y)/2.0;
+
+        self.past_accel = self.current_accel;
     }
 
     pub fn render(&self) -> graphics::MeshBuilder{

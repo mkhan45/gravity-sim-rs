@@ -12,7 +12,7 @@ use physics::*;
 use rayon::prelude::*;
 use std::thread;
 
-const G: f32 = 6.674;
+
 
 struct MainState {
     bodies: Vec<Body>,
@@ -25,8 +25,6 @@ struct MainState {
     trail_length: usize,
     mouse_pressed: bool,
     paused: bool,
-    predict_body: Body,
-    predict_speed: usize,
 }
 
 type Point2 = na::Point2<f32>;
@@ -56,8 +54,6 @@ impl MainState {
             trail_length: 30,
             mouse_pressed: false,
             paused: false,
-            predict_body: Body::new(Point2::new(0.0, 0.0), 1.0, 1.0, Vector2::new(0.0, 0.0)),
-            predict_speed: 1,
         }
     }
 }
@@ -70,24 +66,8 @@ impl event::EventHandler for MainState {
             self.bodies = update_velocities_and_collide(&self.bodies);
             for i in 0..self.bodies.len(){
                 self.bodies[i].update();
-                self.bodies[i].trail_length = self.trail_length;
             }
         }
-        
-        for i in (0..self.predict_speed){
-            if self.mouse_pressed{
-                self.predict_body.past_accel += self.bodies.iter()
-                    .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
-                        let r = distance(&body.pos, &self.predict_body.pos);
-                        let a_mag = (G*body.mass)/(r.powf(2.0));
-                        let angle = angle(&body.pos, &self.predict_body.pos);
-                        acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
-                    });
-                self.predict_body.trail_length = self.predict_body.trail.len() + 2;
-                self.predict_body.update();
-            }
-        }
-
         Ok(())
     }
 
@@ -102,9 +82,8 @@ impl event::EventHandler for MainState {
             Density: {density}
             Radius: {radius}
             Trail length: {trail_length}
-            Prediction Speed: {prediction_speed}
             ",
-            x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length, prediction_speed = self.predict_speed);
+            x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length);
 
         let text = graphics::Text::new(info);
         graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
@@ -129,45 +108,18 @@ impl event::EventHandler for MainState {
                     Err(_error) => {},
                 };
             }
+            self.bodies[i].trail_length = self.trail_length;
 
             let body = graphics::Mesh::new_circle( //draw body
                 ctx,
                 graphics::DrawMode::fill(),
                 self.bodies[i].pos,
                 self.bodies[i].radius,
-                2.0,
+                5.0,
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0),
                 )?;
 
             graphics::draw(ctx, &body, params).expect("error drawing body");
-        }
-
-        if self.mouse_pressed && self.predict_speed != 0{ //prediction
-            if self.predict_body.trail.len() > 2{
-                let trail = graphics::Mesh::new_line(
-                        ctx,
-                        &self.predict_body.trail.as_slices().0,
-                        0.25 * self.predict_body.radius,
-                        graphics::Color::new(0.0, 1.0, 0.1, 0.4)
-                        );
-
-                    match trail {
-                        Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-                        Err(_error) => {},
-                    };
-            }
-
-            let body = graphics::Mesh::new_circle( //draw body
-                ctx,
-                graphics::DrawMode::fill(),
-                self.predict_body.pos,
-                self.predict_body.radius,
-                2.0,
-                graphics::Color::new(0.0, 1.0, 0.0, 0.8),
-                )?;
-
-            graphics::draw(ctx, &body, params).expect("error drawing prediction body");
-
         }
 
         if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw vector
@@ -192,7 +144,6 @@ impl event::EventHandler for MainState {
             )?;
 
         graphics::draw(ctx, &outline, params).expect("error drawing outline");
-        
 
         graphics::present(ctx).expect("error rendering");
 
@@ -253,7 +204,8 @@ impl event::EventHandler for MainState {
     }
 
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { self.zoom *= 1.0 + (y as f32 * 0.1); 
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) {
+        self.zoom *= 1.0 + (y as f32 * 0.1); 
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
@@ -287,12 +239,6 @@ impl event::EventHandler for MainState {
             _ => self.trail_length,
         };
 
-        self.predict_speed = match keycode {
-            input::keyboard::KeyCode::X => self.predict_speed + 1,
-            input::keyboard::KeyCode::Z => if self.predict_speed != 0 {self.predict_speed - 1} else {0},
-            _ => self.predict_speed,
-        };
-
         match keycode{
             input::keyboard::KeyCode::Space => {
                 self.paused = !self.paused;
@@ -314,14 +260,6 @@ impl event::EventHandler for MainState {
         let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom);
         let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
         self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
-        if self.mouse_pressed {
-            self.predict_body = Body::new(
-                self.start_point,
-                self.radius.powf(3.0) * self.density,
-                self.radius,
-                Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
-                )
-        }
     }
 }
 
