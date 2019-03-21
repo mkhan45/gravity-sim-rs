@@ -57,13 +57,14 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
         microprofile::scope!("Update velocities/collide", "Calculations");
 
         for current_body_i in 0..bodies.len(){
+            bodies[current_body_i].current_accel = Vector2::new(0.0, 0.0);
             for other_body_i in 0..bodies.len(){
                 if other_body_i != current_body_i {
                     let other_body = &bodies[other_body_i].clone();
                     let current_body = &mut bodies[current_body_i];
 
                     let r = distance(&other_body.pos, &current_body.pos);
-                    let a_mag = (G*other_body.mass)/(r.powf(2.0)); //acceleration = Gm_2/r^2
+                    let a_mag = (G*other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
                     let angle = angle(&other_body.pos, &current_body.pos);
                     
                     if r <= other_body.radius + current_body.radius && !collision_blacklist.contains(&current_body_i){
@@ -72,10 +73,11 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
                         collision_bodies.push(collide(&current_body, &other_body));
                     }
 
-                    bodies[current_body_i].past_accel.x = angle.cos() * a_mag;
-                    bodies[current_body_i].past_accel.y = angle.sin() * a_mag;
+                    current_body.current_accel.x += angle.cos() * a_mag;
+                    current_body.current_accel.y += angle.sin() * a_mag;
                 }
             }
+            bodies[current_body_i].update();
         }
 
         bodies = bodies.par_iter()

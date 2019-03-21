@@ -46,13 +46,8 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
         }
         
 
-        self.pos.x += self.velocity.x + (0.5 * self.past_accel.x);
-        self.pos.y += self.velocity.y + (0.5 * self.past_accel.y);
-        
-        self.velocity.x += (self.past_accel.x + self.current_accel.x)/2.0;
-
-        self.velocity.y += (self.past_accel.y + self.current_accel.y)/2.0;
-
+        self.velocity += (self.current_accel + self.past_accel)/2.0;
+        self.pos += self.velocity + self.current_accel/2.0;
         self.past_accel = self.current_accel;
     }
 

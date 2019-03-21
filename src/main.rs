@@ -69,17 +69,16 @@ impl event::EventHandler for MainState {
         if !self.paused{
             self.bodies = update_velocities_and_collide(&self.bodies);
             for i in 0..self.bodies.len(){
-                self.bodies[i].update();
                 self.bodies[i].trail_length = self.trail_length;
             }
         }
         
         for i in (0..self.predict_speed){
             if self.mouse_pressed{
-                self.predict_body.past_accel = self.bodies.iter()
+                self.predict_body.current_accel = self.bodies.iter()
                     .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
                         let r = distance(&body.pos, &self.predict_body.pos);
-                        let a_mag = (G*body.mass)/(r.powf(2.0));
+                        let a_mag = (G*body.mass)/(r.powi(2));
                         let angle = angle(&body.pos, &self.predict_body.pos);
                         acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
                     });
@@ -240,7 +239,7 @@ impl event::EventHandler for MainState {
             event::MouseButton::Left => {
                 self.bodies.push(Body::new(
                         self.start_point,
-                        self.radius.powf(3.0) * self.density,
+                        self.radius.powi(3) * self.density,
                         self.radius,
                         Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
                         ));
@@ -317,7 +316,7 @@ impl event::EventHandler for MainState {
         if self.mouse_pressed {
             self.predict_body = Body::new(
                 self.start_point,
-                self.radius.powf(3.0) * self.density,
+                self.radius.powi(3) * self.density,
                 self.radius,
                 Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
                 )
@@ -345,7 +344,7 @@ fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
             let point = Point2::new((x as f32 * radius * 50.0) - (start.x * (1.0/zoom)), (y as f32 * radius * 50.0) - (start.y * (1.0/zoom)));
             new_bodies.push(Body::new(
                     point,
-                    radius.powf(3.0) * density,
+                    radius.powi(3) * density,
                     *radius,
                     Vector2::new(0.0, 0.0)));
         });
