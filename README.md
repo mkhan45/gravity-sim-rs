@@ -1,4 +1,4 @@
-# nbody-rs
+# gravity-sim
 N body gravity sim with rust and ggez, made to learn rust
 
 ![](preview.gif)
