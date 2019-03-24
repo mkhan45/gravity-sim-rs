@@ -27,6 +27,8 @@ struct MainState {
     paused: bool,
     predict_body: Body,
     predict_speed: usize,
+    integrator: Integrator,
+    help_menu: bool,
 }
 
 type Point2 = na::Point2<f32>;
@@ -58,6 +60,8 @@ impl MainState {
             paused: false,
             predict_body: Body::new(Point2::new(0.0, 0.0), 1.0, 1.0, Vector2::new(0.0, 0.0)),
             predict_speed: 1,
+            integrator: Integrator::Verlet,
+            help_menu: false,
         }
     }
 }
@@ -67,7 +71,7 @@ impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         microprofile::flip();
         if !self.paused{
-            self.bodies = update_velocities_and_collide(&self.bodies);
+            self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
             for i in 0..self.bodies.len(){
                 self.bodies[i].trail_length = self.trail_length;
             }
@@ -83,7 +87,10 @@ impl event::EventHandler for MainState {
                         acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
                     });
                 self.predict_body.trail_length = self.predict_body.trail.len() + 2;
-                self.predict_body.update();
+                match self.integrator{
+                    Integrator::Euler => self.predict_body.update_euler(),
+                    Integrator::Verlet => self.predict_body.update_verlet(),
+                };
             }
         }
 
@@ -93,109 +100,146 @@ impl event::EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         microprofile::scope!("Draw", "Main");
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
+        
+        if !self.help_menu {
+            let info = format!(
+                "
+                Offset: {x}, {y}
+                Zoom: {zoom}
+                Density: {density}
+                Radius: {radius}
+                Trail length: {trail_length}
+                Prediction Speed: {prediction_speed}
+                Integrator: {method}
+                Press H for keybinds
+                ",
+                x = self.offset.x,
+                y = self.offset.y, 
+                zoom = self.zoom,
+                density = self.density,
+                radius = self.radius,
+                trail_length = self.trail_length,
+                prediction_speed = self.predict_speed,
+                method = format!("{:?}", self.integrator));
 
-        let info = format!(
-            "
-            Offset: {x}, {y}
-            Zoom: {zoom}
-            Density: {density}
-            Radius: {radius}
-            Trail length: {trail_length}
-            Prediction Speed: {prediction_speed}
-            ",
-            x = self.offset.x, y = self.offset.y, zoom = self.zoom, density = self.density, radius = self.radius, trail_length = self.trail_length, prediction_speed = self.predict_speed);
+            let text = graphics::Text::new(info);
+            graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
 
-        let text = graphics::Text::new(info);
-        graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
+            let mut params = graphics::DrawParam::new();
 
-        let mut params = graphics::DrawParam::new();
-
-        params = params.dest(self.offset);
-        params = params.scale(Vector2::new(self.zoom, self.zoom));
+            params = params.dest(self.offset);
+            params = params.scale(Vector2::new(self.zoom, self.zoom));
 
 
-        for i in 0..self.bodies.len(){ //draw trail and bodies
-            if self.trail_length > 1 { //trail
-                let trail = graphics::Mesh::new_line(
-                    ctx,
-                    &self.bodies[i].trail.as_slices().0,
-                    0.25 * self.bodies[i].radius,
-                    graphics::Color::new(0.1, 0.25, 1.0, 0.5)
-                    );
-
-                match trail {
-                    Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-                    Err(_error) => {},
-                };
-            }
-
-            let body = graphics::Mesh::new_circle( //draw body
-                ctx,
-                graphics::DrawMode::fill(),
-                self.bodies[i].pos,
-                self.bodies[i].radius,
-                2.0,
-                graphics::Color::new(1.0, 1.0, 1.0, 1.0),
-                )?;
-
-            graphics::draw(ctx, &body, params).expect("error drawing body");
-        }
-
-        if self.mouse_pressed && self.predict_speed != 0{ //prediction
-            if self.predict_body.trail.len() > 2{
-                let trail = graphics::Mesh::new_line(
+            for i in 0..self.bodies.len(){ //draw trail and bodies
+                if self.trail_length > 1 { //trail
+                    let trail = graphics::Mesh::new_line(
                         ctx,
-                        &self.predict_body.trail.as_slices().0,
-                        0.25 * self.predict_body.radius,
-                        graphics::Color::new(0.0, 1.0, 0.1, 0.4)
+                        &self.bodies[i].trail.as_slices().0,
+                        0.25 * self.bodies[i].radius,
+                        graphics::Color::new(0.1, 0.25, 1.0, 0.5)
                         );
 
                     match trail {
                         Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
                         Err(_error) => {},
                     };
+                }
+
+                let body = graphics::Mesh::new_circle( //draw body
+                    ctx,
+                    graphics::DrawMode::fill(),
+                    self.bodies[i].pos,
+                    self.bodies[i].radius,
+                    2.0,
+                    graphics::Color::new(1.0, 1.0, 1.0, 1.0),
+                    )?;
+
+                graphics::draw(ctx, &body, params).expect("error drawing body");
             }
 
-            let body = graphics::Mesh::new_circle( //draw body
+            if self.mouse_pressed && self.predict_speed != 0{ //prediction
+                if self.predict_body.trail.len() > 2{
+                    let trail = graphics::Mesh::new_line(
+                            ctx,
+                            &self.predict_body.trail.as_slices().0,
+                            0.25 * self.predict_body.radius,
+                            graphics::Color::new(0.0, 1.0, 0.1, 0.4)
+                            );
+
+                        match trail {
+                            Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
+                            Err(_error) => {},
+                        };
+                }
+
+                let body = graphics::Mesh::new_circle( //draw body
+                    ctx,
+                    graphics::DrawMode::fill(),
+                    self.predict_body.pos,
+                    self.predict_body.radius,
+                    2.0,
+                    graphics::Color::new(0.0, 1.0, 0.0, 0.8),
+                    )?;
+
+                graphics::draw(ctx, &body, params).expect("error drawing prediction body");
+
+            }
+
+            if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw vector
+                let line = graphics::Mesh::new_line(
+                    ctx,
+                    &vec![self.start_point, self.mouse_pos][..],
+                    0.25 * self.radius,
+                    graphics::Color::new(1.0, 1.0, 1.0, 0.8),
+                    )?;
+
+                graphics::draw(ctx, &line, params).expect("error drawing preview line");
+            }
+
+
+            let outline = graphics::Mesh::new_circle( //draw outline
                 ctx,
                 graphics::DrawMode::fill(),
-                self.predict_body.pos,
-                self.predict_body.radius,
+                if self.mouse_pressed {self.start_point} else {self.mouse_pos},
+                self.radius,
                 2.0,
-                graphics::Color::new(0.0, 1.0, 0.0, 0.8),
+                graphics::Color::new(1.0, 1.0, 1.0, 0.25),
                 )?;
 
-            graphics::draw(ctx, &body, params).expect("error drawing prediction body");
+            graphics::draw(ctx, &outline, params).expect("error drawing outline");
+        }else {
+            let help = "
+                Arrow keys to move
 
+                Scroll to zoom in/out
+
+                Q/A to increase/decrease radius of next placed body
+
+                W/S to increase/decrease density (try making it negative)
+
+                E/D to increase/decrease trail length (removing trails increases performance by a lot)
+
+                X/Z to increase/decrease prediction speed, setting it to 0 turns of predictions.
+
+                Left click to place a body, dragging before releasing makes an initial velocity vector.
+
+                Right click over a body to delete it.
+
+                G creates a 10x10 grid of bodies with the specified radii and densities.
+
+                R to reset.
+
+                Space to pause.
+
+                I to change integration method
+            ";
+
+            let text = graphics::Text::new(help);
+            graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
         }
-
-        if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw vector
-            let line = graphics::Mesh::new_line(
-                ctx,
-                &vec![self.start_point, self.mouse_pos][..],
-                0.25 * self.radius,
-                graphics::Color::new(1.0, 1.0, 1.0, 0.8),
-                )?;
-
-            graphics::draw(ctx, &line, params).expect("error drawing preview line");
-        }
-
-
-        let outline = graphics::Mesh::new_circle( //draw outline
-            ctx,
-            graphics::DrawMode::fill(),
-            if self.mouse_pressed {self.start_point} else {self.mouse_pos},
-            self.radius,
-            2.0,
-            graphics::Color::new(1.0, 1.0, 1.0, 0.25),
-            )?;
-
-        graphics::draw(ctx, &outline, params).expect("error drawing outline");
-        
 
         graphics::present(ctx).expect("error rendering");
-
-
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
             println!("Bodies: {}", self.bodies.len());
@@ -302,6 +346,17 @@ impl event::EventHandler for MainState {
             }
 
             input::keyboard::KeyCode::R => self.bodies = Vec::new(),
+
+            input::keyboard::KeyCode::I => {
+                self.integrator = match self.integrator {
+                    Integrator::Euler => Integrator::Verlet,
+                    Integrator::Verlet => Integrator::Euler,
+                };
+            }
+
+            input::keyboard::KeyCode::H => {
+                self.help_menu = !self.help_menu;
+            }
 
             _ => {},
         };

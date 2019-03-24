@@ -34,9 +34,7 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
         }
     }
 
-    pub fn update(&mut self){
-        microprofile::scope!("Update", "Bodies");
-
+    pub fn update_trail(&mut self){
         self.trail.push_back(self.pos);
                
         if self.trail.len() > self.trail_length {
@@ -44,7 +42,21 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
                 self.trail.pop_front();
             }
         }
-        
+    }
+
+    pub fn update_euler(&mut self){
+        microprofile::scope!("Update", "Bodies");
+
+        self.update_trail();
+
+        self.velocity += self.current_accel;
+        self.pos += self.velocity;
+    }
+
+    pub fn update_verlet(&mut self){
+        microprofile::scope!("Update", "Bodies");
+
+        self.update_trail();
 
         self.velocity += (self.current_accel + self.past_accel)/2.0;
         self.pos += self.velocity + self.current_accel/2.0;

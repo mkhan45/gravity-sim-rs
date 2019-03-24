@@ -50,7 +50,7 @@ pub fn angle(a: &Point2, b: &Point2) -> f32{
     restricted_dom
 }
 
-pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
+pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) -> Vec<Body>{
         let mut bodies = bodies.clone();
         let mut collision_blacklist = HashSet::new();
         let mut collision_bodies = Vec::new();
@@ -77,7 +77,11 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
                     current_body.current_accel.y += angle.sin() * a_mag;
                 }
             }
-            bodies[current_body_i].update();
+
+            match method {
+                &Integrator::Euler => bodies[current_body_i].update_euler(),
+                &Integrator::Verlet => bodies[current_body_i].update_verlet(),
+            };
         }
 
         bodies = bodies.par_iter()
@@ -92,4 +96,10 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>) -> Vec<Body>{
         
         bodies.append(&mut collision_bodies);
         return bodies;
-    }
+}
+
+#[derive(Debug)]
+pub enum Integrator{
+    Euler,
+    Verlet,
+}
