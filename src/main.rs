@@ -14,6 +14,7 @@ use std::thread;
 
 const G: f32 = 6.674;
 
+#[derive(Clone)]
 struct MainState {
     bodies: Vec<Body>,
     start_point: Point2,
@@ -36,12 +37,10 @@ type Vector2 = na::Vector2<f32>;
 
 
 impl MainState {
-    fn new(ctx: &mut Context) -> Self {
-        let width = ctx.conf.window_mode.width as f32;
-        let height = ctx.conf.window_mode.height as f32;
+    fn new() -> Self {
         let bodies = vec![
             Body::new(
-                Point2::new(width/2.0, height/2.0),
+                Point2::new(500.0, 400.0),
                 300000.0,
                 100.0,
                 Vector2::new(0.0, 0.0)),
@@ -345,7 +344,17 @@ impl event::EventHandler for MainState {
                 self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom));
             }
 
-            input::keyboard::KeyCode::R => self.bodies = Vec::new(),
+            input::keyboard::KeyCode::R => {
+                self.bodies = vec![
+                    Body::new(
+                        Point2::new(500.0, 400.0),
+                        300000.0,
+                        100.0,
+                        Vector2::new(0.0, 0.0)),
+                ];
+                self.zoom = 1.0;
+                self.offset = Point2::new(0.0, 0.0);
+            }
 
             input::keyboard::KeyCode::I => {
                 self.integrator = match self.integrator {
@@ -384,7 +393,7 @@ pub fn main() -> GameResult{
         .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
         .build()?;
-    let state = &mut MainState::new(ctx);
+    let state = &mut MainState::new().clone();
 
     microprofile::init();
     microprofile::set_enable_all_groups(true);

@@ -98,7 +98,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
         return bodies;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Integrator{
     Euler,
     Verlet,
