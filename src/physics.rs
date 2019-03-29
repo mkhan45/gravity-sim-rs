@@ -5,47 +5,46 @@ use std::collections::HashSet;
 
 use rayon::prelude::*;
 
-const G: f32 = 6.674;
 
 type Point2 = na::Point2<f32>;
 type Vector2 = na::Vector2<f32>;
 
-pub fn collide(body1: &Body, body2: &Body) -> Body{
+const G: f32 = 6.674;
+
+pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that conserves momentum
     let body1_momentum = Point2::new(body1.velocity.x, body1.velocity.y);
     let body2_momentum = Point2::new(body2.velocity.x, body2.velocity.y);
 
-    let body1_momentum = Point2::new(body1_momentum.x * body1.mass, body1_momentum.y * body1.mass);
-    let body2_momentum = Point2::new(body2_momentum.x * body2.mass, body2_momentum.y * body2.mass);
+    let body1_momentum = Vector2::new(body1_momentum.x * body1.mass, body1_momentum.y * body1.mass);
+    let body2_momentum = Vector2::new(body2_momentum.x * body2.mass, body2_momentum.y * body2.mass);
 
-    let total_momentum = Vector2::new(body1_momentum.x + body2_momentum.x, body1_momentum.y + body2_momentum.y);
+    let total_momentum = body1_momentum + body2_momentum;
 
-    
-    let volume_1 = 4.0/3.0 * PI * body1.radius.powf(3.0);
-    let volume_2 = 4.0/3.0 * PI * body2.radius.powf(3.0);
+    let volume_1 = 4.0/3.0 * PI * body1.radius.powi(3);
+    let volume_2 = 4.0/3.0 * PI * body2.radius.powi(3);
 
     let total_mass = body1.mass + body2.mass;
 
     let total_volume = volume_1 + volume_2;
 
-    let new_rad = (((3.0/4.0)*total_volume)/PI).powf(1.0/3.0);
+    let new_rad = (((3.0/4.0)*total_volume)/PI).powf(1.0/3.0); //add volumes
 
     Body::new(
         if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)},
         total_mass,
         new_rad,
-        Vector2::new(total_momentum.x/total_mass, total_momentum.y/total_mass),
+        total_momentum/total_mass,
     )
 }
 
 pub fn distance(a: &Point2, b: &Point2) -> f32{
-    ((b.x - a.x).powf(2.0) + (b.y-a.y).powf(2.0)).sqrt()
+    ((b.x - a.x).powi(2) + (b.y-a.y).powi(2)).sqrt()
 }
 
 pub fn angle(a: &Point2, b: &Point2) -> f32{
-    let mut restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan();
-    if b.x >= a.x{
-        restricted_dom += PI;
-    }
+    let mut restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan(); //.atan() returns from -pi/2 to +pi/2
+
+    if b.x >= a.x {restricted_dom += PI}
 
     restricted_dom
 }
@@ -66,15 +65,15 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
                     let r = distance(&other_body.pos, &current_body.pos);
                     let a_mag = (G*other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
                     let angle = angle(&other_body.pos, &current_body.pos);
-                    
+
+                    //if two bodies collide, add them to remove list and create new body that's a combination of both
                     if r <= other_body.radius + current_body.radius && !collision_blacklist.contains(&current_body_i){
                         collision_blacklist.insert(current_body_i);
                         collision_blacklist.insert(other_body_i);
                         collision_bodies.push(collide(&current_body, &other_body));
                     }
 
-                    current_body.current_accel.x += angle.cos() * a_mag;
-                    current_body.current_accel.y += angle.sin() * a_mag;
+                    current_body.current_accel += Vector2::new(angle.cos() * a_mag, angle.sin() * a_mag);
                 }
             }
 
@@ -84,7 +83,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
             };
         }
 
-        bodies = bodies.par_iter()
+        bodies = bodies.par_iter() //remove all bodiese in collision_blacklist
             .enumerate()
             .filter_map(|(index, body)| {
                 if collision_blacklist.contains(&index) {

@@ -18,10 +18,12 @@ pub struct Body {
     pub current_accel: Vector2,
 }
 
-impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
+impl Body {
+    pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
         let mut trail_vec = VecDeque::new();
         trail_vec.push_back(Point2::new(position.x + rad/2.0, position.y + rad/2.0));
         trail_vec.push_back(Point2::new(position.x, position.y));
+
         Body {
             pos: position,
             mass: mass_assign,
@@ -36,15 +38,15 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
 
     pub fn update_trail(&mut self){
         self.trail.push_back(self.pos);
-               
+
         if self.trail.len() > self.trail_length {
-            for _i in 0..(self.trail.len() - self.trail_length - 1) {
+            for _i in 0..(self.trail.len() - self.trail_length - 1) { //pop all points over trail length limit
                 self.trail.pop_front();
             }
         }
     }
 
-    pub fn update_euler(&mut self){
+    pub fn update_euler(&mut self){ //implicit euler
         microprofile::scope!("Update", "Bodies");
 
         self.update_trail();
@@ -53,7 +55,7 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
         self.pos += self.velocity;
     }
 
-    pub fn update_verlet(&mut self){
+    pub fn update_verlet(&mut self){ //verlet velocity
         microprofile::scope!("Update", "Bodies");
 
         self.update_trail();
@@ -61,16 +63,5 @@ impl Body { pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector
         self.velocity += (self.current_accel + self.past_accel)/2.0;
         self.pos += self.velocity + self.current_accel/2.0;
         self.past_accel = self.current_accel;
-    }
-
-    pub fn render(&self) -> graphics::MeshBuilder{
-        graphics::MeshBuilder::new()
-            .circle(
-                graphics::DrawMode::fill(),
-                self.pos,
-                self.radius,
-                2.5,
-                graphics::Color::new(1.0, 1.0, 1.0, 1.0))
-            .clone() 
     }
 }

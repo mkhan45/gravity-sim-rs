@@ -40,10 +40,10 @@ impl MainState {
     fn new() -> Self {
         let bodies = vec![
             Body::new(
-                Point2::new(500.0, 400.0),
-                300000.0,
-                100.0,
-                Vector2::new(0.0, 0.0)),
+                Point2::new(500.0, 400.0), //position
+                300000.0, //mass
+                100.0,  //radius
+                Vector2::new(0.0, 0.0)), //velocity
         ];
 
         MainState {
@@ -69,6 +69,7 @@ impl MainState {
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         microprofile::flip();
+
         if !self.paused{
             self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
             for i in 0..self.bodies.len(){
@@ -76,7 +77,7 @@ impl event::EventHandler for MainState {
             }
         }
         
-        for i in (0..self.predict_speed){
+        for i in (0..self.predict_speed){ //reimplementation of update_bodies_and_collide() but for only predict body
             if self.mouse_pressed{
                 self.predict_body.current_accel = self.bodies.iter()
                     .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
@@ -101,33 +102,37 @@ impl event::EventHandler for MainState {
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
         
         if !self.help_menu {
-            let info = format!(
-                "
-                Offset: {x}, {y}
-                Zoom: {zoom}
-                Density: {density}
-                Radius: {radius}
-                Trail length: {trail_length}
-                Prediction Speed: {prediction_speed}
-                Integrator: {method}
-                Press H for keybinds
-                ",
-                x = self.offset.x,
-                y = self.offset.y, 
-                zoom = self.zoom,
-                density = self.density,
-                radius = self.radius,
-                trail_length = self.trail_length,
-                prediction_speed = self.predict_speed,
-                method = format!("{:?}", self.integrator));
 
-            let text = graphics::Text::new(info);
-            graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
+            {
+                let info = format!(
+                    "
+                    Offset: {x}, {y}
+                    Zoom: {zoom}
+                    Density: {density}
+                    Radius: {radius}
+                    Trail length: {trail_length}
+                    Prediction Speed: {prediction_speed}
+                    Integrator: {method}
+                    Press H for keybinds
+                    ",
+                    x = self.offset.x,
+                    y = self.offset.y, 
+                    zoom = self.zoom,
+                    density = self.density,
+                    radius = self.radius,
+                    trail_length = self.trail_length,
+                    prediction_speed = self.predict_speed,
+                    method = format!("{:?}", self.integrator));
+
+                let text = graphics::Text::new(info);
+                graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
+            }
 
             let mut params = graphics::DrawParam::new();
 
-            params = params.dest(self.offset);
-            params = params.scale(Vector2::new(self.zoom, self.zoom));
+            params = params
+                .dest(self.offset)
+                .scale(Vector2::new(self.zoom, self.zoom));
 
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
@@ -152,12 +157,12 @@ impl event::EventHandler for MainState {
                     self.bodies[i].radius,
                     2.0,
                     graphics::Color::new(1.0, 1.0, 1.0, 1.0),
-                    )?;
+                    ).expect("error building body mesh");
 
                 graphics::draw(ctx, &body, params).expect("error drawing body");
             }
 
-            if self.mouse_pressed && self.predict_speed != 0{ //prediction
+            if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
                 if self.predict_body.trail.len() > 2{
                     let trail = graphics::Mesh::new_line(
                             ctx,
@@ -182,16 +187,15 @@ impl event::EventHandler for MainState {
                     )?;
 
                 graphics::draw(ctx, &body, params).expect("error drawing prediction body");
-
             }
 
-            if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw vector
+            if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
                 let line = graphics::Mesh::new_line(
                     ctx,
                     &vec![self.start_point, self.mouse_pos][..],
                     0.25 * self.radius,
                     graphics::Color::new(1.0, 1.0, 1.0, 0.8),
-                    )?;
+                    ).expect("error building preview line mesh");
 
                 graphics::draw(ctx, &line, params).expect("error drawing preview line");
             }
@@ -204,41 +208,44 @@ impl event::EventHandler for MainState {
                 self.radius,
                 2.0,
                 graphics::Color::new(1.0, 1.0, 1.0, 0.25),
-                )?;
+                ).expect("error building outline");
 
             graphics::draw(ctx, &outline, params).expect("error drawing outline");
         }else {
-            let help = "
-                Arrow keys to move
+            {
+                let help = "
+                    Arrow keys to move
 
-                Scroll to zoom in/out
+                    Scroll to zoom in/out
 
-                Q/A to increase/decrease radius of next placed body
+                    Q/A to increase/decrease radius of next placed body
 
-                W/S to increase/decrease density (try making it negative)
+                    W/S to increase/decrease density (try making it negative)
 
-                E/D to increase/decrease trail length (removing trails increases performance by a lot)
+                    E/D to increase/decrease trail length (removing trails increases performance by a lot)
 
-                X/Z to increase/decrease prediction speed, setting it to 0 turns of predictions.
+                    X/Z to increase/decrease prediction speed, setting it to 0 turns of predictions.
 
-                Left click to place a body, dragging before releasing makes an initial velocity vector.
+                    Left click to place a body, dragging before releasing makes an initial velocity vector.
 
-                Right click over a body to delete it.
+                    Right click over a body to delete it.
 
-                G creates a 10x10 grid of bodies with the specified radii and densities.
+                    G creates a 10x10 grid of bodies with the specified radii and densities.
 
-                R to reset.
+                    R to reset.
 
-                Space to pause.
+                    Space to pause.
 
-                I to change integration method
-            ";
+                    I to change integration method
+                ";
 
-            let text = graphics::Text::new(help);
-            graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
+                let text = graphics::Text::new(help);
+                graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
+            }
         }
 
         graphics::present(ctx).expect("error rendering");
+
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
             println!("Bodies: {}", self.bodies.len());
@@ -258,7 +265,7 @@ impl event::EventHandler for MainState {
 
             event::MouseButton::Right => {
                 println!("Removing body at {} {}", zoomed_x, zoomed_y);
-                self.bodies = self.bodies.par_iter()
+                self.bodies = self.bodies.par_iter() //iterate through meshes and delete any under mouse
                     .filter_map(|body| {
                         let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
                         if distance(&mouse_pointer, &body.pos) > body.radius {
@@ -295,7 +302,8 @@ impl event::EventHandler for MainState {
     }
 
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { self.zoom *= 1.0 + (y as f32 * 0.1); 
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
+        self.zoom *= 1.0 + (y as f32 * 0.1); 
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
@@ -376,14 +384,14 @@ impl event::EventHandler for MainState {
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
         let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom);
         let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
+
         self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
         if self.mouse_pressed {
             self.predict_body = Body::new(
                 self.start_point,
                 self.radius.powi(3) * self.density,
                 self.radius,
-                Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
-                )
+                Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
         }
     }
 }
