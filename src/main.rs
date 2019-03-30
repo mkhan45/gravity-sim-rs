@@ -10,7 +10,6 @@ mod physics;
 use physics::*;
 
 use rayon::prelude::*;
-use std::thread;
 
 const G: f32 = 6.674;
 
@@ -38,7 +37,7 @@ type Vector2 = na::Vector2<f32>;
 
 impl MainState {
     fn new() -> Self {
-        let bodies = vec![
+        let bodies = vec![ //initialize with one massive body in center
             Body::new(
                 Point2::new(500.0, 400.0), //position
                 300000.0, //mass
@@ -77,8 +76,9 @@ impl event::EventHandler for MainState {
             }
         }
         
-        for i in (0..self.predict_speed){ //reimplementation of update_bodies_and_collide() but for only predict body
-            if self.mouse_pressed{
+        //draw prediction
+        if self.mouse_pressed{
+            for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
                 self.predict_body.current_accel = self.bodies.iter()
                     .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
                         let r = distance(&body.pos, &self.predict_body.pos);
@@ -100,10 +100,10 @@ impl event::EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         microprofile::scope!("Draw", "Main");
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
-        
-        if !self.help_menu {
 
+        if !self.help_menu {
             {
+                //top left ui text
                 let info = format!(
                     "
                     Offset: {x}, {y}
@@ -128,9 +128,7 @@ impl event::EventHandler for MainState {
                 graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
             }
 
-            let mut params = graphics::DrawParam::new();
-
-            params = params
+            let params = graphics::DrawParam::new()
                 .dest(self.offset)
                 .scale(Vector2::new(self.zoom, self.zoom));
 
@@ -142,7 +140,7 @@ impl event::EventHandler for MainState {
                         &self.bodies[i].trail.as_slices().0,
                         0.25 * self.bodies[i].radius,
                         graphics::Color::new(0.1, 0.25, 1.0, 0.5)
-                        );
+                    );
 
                     match trail {
                         Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
@@ -156,8 +154,8 @@ impl event::EventHandler for MainState {
                     self.bodies[i].pos,
                     self.bodies[i].radius,
                     2.0,
-                    graphics::Color::new(1.0, 1.0, 1.0, 1.0),
-                    ).expect("error building body mesh");
+                    graphics::Color::new(1.0, 1.0, 1.0, 1.0))
+                    .expect("error building body mesh");
 
                 graphics::draw(ctx, &body, params).expect("error drawing body");
             }
@@ -165,26 +163,25 @@ impl event::EventHandler for MainState {
             if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
                 if self.predict_body.trail.len() > 2{
                     let trail = graphics::Mesh::new_line(
-                            ctx,
-                            &self.predict_body.trail.as_slices().0,
-                            0.25 * self.predict_body.radius,
-                            graphics::Color::new(0.0, 1.0, 0.1, 0.4)
-                            );
+                        ctx,
+                        &self.predict_body.trail.as_slices().0,
+                        0.25 * self.predict_body.radius,
+                        graphics::Color::new(0.0, 1.0, 0.1, 0.4)
+                    );
 
-                        match trail {
-                            Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-                            Err(_error) => {},
-                        };
+                    match trail {
+                        Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
+                        Err(_error) => {},
+                    };
                 }
 
-                let body = graphics::Mesh::new_circle( //draw body
+                let body = graphics::Mesh::new_circle( //draw prediction body
                     ctx,
                     graphics::DrawMode::fill(),
                     self.predict_body.pos,
                     self.predict_body.radius,
                     2.0,
-                    graphics::Color::new(0.0, 1.0, 0.0, 0.8),
-                    )?;
+                    graphics::Color::new(0.0, 1.0, 0.0, 0.8)).expect("error building prediction body");
 
                 graphics::draw(ctx, &body, params).expect("error drawing prediction body");
             }
@@ -194,8 +191,8 @@ impl event::EventHandler for MainState {
                     ctx,
                     &vec![self.start_point, self.mouse_pos][..],
                     0.25 * self.radius,
-                    graphics::Color::new(1.0, 1.0, 1.0, 0.8),
-                    ).expect("error building preview line mesh");
+                    graphics::Color::new(1.0, 1.0, 1.0, 0.8))
+                    .expect("error building preview line mesh");
 
                 graphics::draw(ctx, &line, params).expect("error drawing preview line");
             }
@@ -207,12 +204,12 @@ impl event::EventHandler for MainState {
                 if self.mouse_pressed {self.start_point} else {self.mouse_pos},
                 self.radius,
                 2.0,
-                graphics::Color::new(1.0, 1.0, 1.0, 0.25),
-                ).expect("error building outline");
+                graphics::Color::new(1.0, 1.0, 1.0, 0.25))
+                .expect("error building outline");
 
             graphics::draw(ctx, &outline, params).expect("error drawing outline");
         }else {
-            {
+            //if help_menu is true
                 let help = "
                     Arrow keys to move
 
@@ -241,7 +238,6 @@ impl event::EventHandler for MainState {
 
                 let text = graphics::Text::new(help);
                 graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
-            }
         }
 
         graphics::present(ctx).expect("error rendering");
@@ -291,8 +287,8 @@ impl event::EventHandler for MainState {
                         self.start_point,
                         self.radius.powi(3) * self.density,
                         self.radius,
-                        Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ),
-                        ));
+                        Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
+                        );
             },
 
             _ => {},
@@ -343,14 +339,10 @@ impl event::EventHandler for MainState {
             _ => self.predict_speed,
         };
 
-        match keycode{
-            input::keyboard::KeyCode::Space => {
-                self.paused = !self.paused;
-            },
+        match keycode{ //misc keys
+            input::keyboard::KeyCode::Space => self.paused = !self.paused,
 
-            input::keyboard::KeyCode::G => {
-                self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom));
-            }
+            input::keyboard::KeyCode::G => self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom)),
 
             input::keyboard::KeyCode::R => {
                 self.bodies = vec![
@@ -371,9 +363,7 @@ impl event::EventHandler for MainState {
                 };
             }
 
-            input::keyboard::KeyCode::H => {
-                self.help_menu = !self.help_menu;
-            }
+            input::keyboard::KeyCode::H => self.help_menu = !self.help_menu,
 
             _ => {},
         };
@@ -382,7 +372,9 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
-        let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom);
+        //this is mostly to make the line when creating a new body
+        
+        let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom); 
         let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
 
         self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
@@ -409,6 +401,7 @@ pub fn main() -> GameResult{
 }
 
 fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
+    //create a 10x10 grid of bodies
     let mut new_bodies: Vec<Body> = Vec::new();
 
     (1..=10).for_each(|y|{
