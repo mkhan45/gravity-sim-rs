@@ -69,7 +69,7 @@ impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         microprofile::flip();
 
-        if !self.paused{
+        if !self.paused{ //physics sim
             self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
             for i in 0..self.bodies.len(){
                 self.bodies[i].trail_length = self.trail_length;
@@ -86,7 +86,10 @@ impl event::EventHandler for MainState {
                         let angle = angle(&body.pos, &self.predict_body.pos);
                         acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
                     });
-                self.predict_body.trail_length = self.predict_body.trail.len() + 2;
+
+                self.predict_body.trail_length += 1; //infinite trail length
+                self.predict_body.update_trail();
+
                 match self.integrator{
                     Integrator::Euler => self.predict_body.update_euler(),
                     Integrator::Verlet => self.predict_body.update_verlet(),
@@ -376,8 +379,8 @@ impl event::EventHandler for MainState {
         
         let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom); 
         let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
-
         self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
+
         if self.mouse_pressed {
             self.predict_body = Body::new(
                 self.start_point,

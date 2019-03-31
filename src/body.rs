@@ -43,21 +43,18 @@ impl Body {
                 self.trail.pop_front();
             }
         }
+
     }
 
     pub fn update_euler(&mut self){ //implicit euler
         microprofile::scope!("Update", "Bodies");
 
-        self.update_trail();
-
-        self.velocity += self.current_accel;
         self.pos += self.velocity;
+        self.velocity += self.current_accel;
     }
 
     pub fn update_verlet(&mut self){ //verlet velocity
         microprofile::scope!("Update", "Bodies");
-
-        self.update_trail();
 
         self.velocity += (self.current_accel + self.past_accel)/2.0;
         self.pos += self.velocity + self.current_accel/2.0;

@@ -12,11 +12,8 @@ type Vector2 = na::Vector2<f32>;
 const G: f32 = 6.674;
 
 pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that conserves momentum
-    let body1_momentum = Point2::new(body1.velocity.x, body1.velocity.y);
-    let body2_momentum = Point2::new(body2.velocity.x, body2.velocity.y);
-
-    let body1_momentum = Vector2::new(body1_momentum.x * body1.mass, body1_momentum.y * body1.mass);
-    let body2_momentum = Vector2::new(body2_momentum.x * body2.mass, body2_momentum.y * body2.mass);
+    let body1_momentum = Vector2::new(body1.velocity.x * body1.mass, body1.velocity.y * body1.mass);
+    let body2_momentum = Vector2::new(body2.velocity.x * body2.mass, body2.velocity.y * body2.mass);
 
     let total_momentum = body1_momentum + body2_momentum;
 
@@ -27,10 +24,10 @@ pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that c
 
     let total_volume = volume_1 + volume_2;
 
-    let new_rad = (((3.0/4.0)*total_volume)/PI).powf(1.0/3.0); //add volumes
+    let new_rad = ( ((3.0/4.0)*total_volume)/PI ).powf(1.0/3.0); //add volumes
 
     Body::new(
-        if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)},
+        if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)}, //take position of bigger body
         total_mass,
         new_rad,
         total_momentum/total_mass,
@@ -42,11 +39,10 @@ pub fn distance(a: &Point2, b: &Point2) -> f32{
 }
 
 pub fn angle(a: &Point2, b: &Point2) -> f32{
-    let mut restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan(); //.atan() returns from -pi/2 to +pi/2
+    let restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan(); //.atan() returns from -pi/2 to +pi/2
 
-    if b.x >= a.x {restricted_dom += PI}
-
-    restricted_dom
+    if b.x >= a.x {restricted_dom + PI}
+    else {restricted_dom}
 }
 
 pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) -> Vec<Body>{
@@ -57,6 +53,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
 
         for current_body_i in 0..bodies.len(){
             bodies[current_body_i].current_accel = Vector2::new(0.0, 0.0);
+
             for other_body_i in 0..bodies.len(){
                 if other_body_i != current_body_i {
                     let other_body = &bodies[other_body_i].clone();
@@ -76,7 +73,8 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
                     current_body.current_accel += Vector2::new(angle.cos() * a_mag, angle.sin() * a_mag);
                 }
             }
-
+            
+            bodies[current_body_i].update_trail();
             match method {
                 &Integrator::Euler => bodies[current_body_i].update_euler(),
                 &Integrator::Verlet => bodies[current_body_i].update_verlet(),
