@@ -75,7 +75,7 @@ impl event::EventHandler for MainState {
                 self.bodies[i].trail_length = self.trail_length;
             }
         }
-        
+
         //draw prediction
         if self.mouse_pressed{
             for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
@@ -169,8 +169,7 @@ impl event::EventHandler for MainState {
                         ctx,
                         &self.predict_body.trail.as_slices().0,
                         0.25 * self.predict_body.radius,
-                        graphics::Color::new(0.0, 1.0, 0.1, 0.4)
-                    );
+                        graphics::Color::new(0.0, 1.0, 0.1, 0.4));
 
                     match trail {
                         Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
@@ -213,7 +212,7 @@ impl event::EventHandler for MainState {
             graphics::draw(ctx, &outline, params).expect("error drawing outline");
         }else {
             //if help_menu is true
-                let help = "
+            let help = "
                     Arrow keys to move
 
                     Scroll to zoom in/out
@@ -239,8 +238,8 @@ impl event::EventHandler for MainState {
                     I to change integration method
                 ";
 
-                let text = graphics::Text::new(help);
-                graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
+            let text = graphics::Text::new(help);
+            graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
         }
 
         graphics::present(ctx).expect("error rendering");
@@ -272,8 +271,7 @@ impl event::EventHandler for MainState {
                         }else {
                             None
                         }
-                    })
-                .collect();
+                    }).collect();
             }
 
             _ => {},
@@ -291,7 +289,7 @@ impl event::EventHandler for MainState {
                         self.radius.powi(3) * self.density,
                         self.radius,
                         Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
-                        );
+                );
             },
 
             _ => {},
@@ -302,7 +300,7 @@ impl event::EventHandler for MainState {
 
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
-        self.zoom *= 1.0 + (y as f32 * 0.1); 
+        self.zoom *= 1.0 + (y * 0.1); 
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
@@ -375,8 +373,8 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
-        //this is mostly to make the line when creating a new body
-        
+        //this is to make the line when creating a new body and create the preview body
+
         let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom); 
         let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
         self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
@@ -395,7 +393,7 @@ pub fn main() -> GameResult{
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Fish")
         .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
-        .build()?;
+        .build().expect("error building context");
     let state = &mut MainState::new().clone();
 
     microprofile::init();
