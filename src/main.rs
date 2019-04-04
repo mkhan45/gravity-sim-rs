@@ -29,6 +29,7 @@ struct MainState {
     predict_speed: usize,
     integrator: Integrator,
     help_menu: bool,
+    fast_forward: usize,
 }
 
 type Point2 = na::Point2<f32>;
@@ -60,6 +61,7 @@ impl MainState {
             predict_speed: 1,
             integrator: Integrator::Verlet,
             help_menu: false,
+            fast_forward: 1,
         }
     }
 }
@@ -70,9 +72,11 @@ impl event::EventHandler for MainState {
         microprofile::flip();
 
         if !self.paused{ //physics sim
-            self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
-            for i in 0..self.bodies.len(){
-                self.bodies[i].trail_length = self.trail_length;
+            for i in 0..self.fast_forward{
+                self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
+                for i in 0..self.bodies.len(){
+                    self.bodies[i].trail_length = self.trail_length;
+                }
             }
         }
 
@@ -102,9 +106,7 @@ impl event::EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         microprofile::scope!("Draw", "Main");
-        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
-
-        if !self.help_menu {
+        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0)); if !self.help_menu {
             {
                 //top left ui text
                 let info = format!(
@@ -116,6 +118,7 @@ impl event::EventHandler for MainState {
                     Trail length: {trail_length}
                     Prediction Speed: {prediction_speed}
                     Integrator: {method}
+                    Sim Speed: {sim_speed}
                     Press H for keybinds
                     ",
                     x = self.offset.x,
@@ -125,7 +128,8 @@ impl event::EventHandler for MainState {
                     radius = self.radius,
                     trail_length = self.trail_length,
                     prediction_speed = self.predict_speed,
-                    method = format!("{:?}", self.integrator));
+                    method = format!("{:?}", self.integrator),
+                    sim_speed = self.fast_forward);
 
                 let text = graphics::Text::new(info);
                 graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
@@ -340,6 +344,12 @@ impl event::EventHandler for MainState {
             _ => self.predict_speed,
         };
 
+        self.fast_forward = match keycode {
+            input::keyboard::KeyCode::Key1 => if self.fast_forward == 1 {1} else {self.fast_forward - 1},
+            input::keyboard::KeyCode::Key2 => self.fast_forward + 1,
+            _ => self.fast_forward,
+        };
+
         match keycode{ //misc keys
             input::keyboard::KeyCode::Space => self.paused = !self.paused,
 
@@ -355,6 +365,7 @@ impl event::EventHandler for MainState {
                 ];
                 self.zoom = 1.0;
                 self.offset = Point2::new(0.0, 0.0);
+                self.fast_forward = 1;
             }
 
             input::keyboard::KeyCode::I => {

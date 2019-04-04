@@ -81,7 +81,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
             };
         }
 
-        bodies = bodies.par_iter() //remove all bodiese in collision_blacklist
+        bodies = bodies.par_iter() //remove all bodies in collision_blacklist
             .enumerate()
             .filter_map(|(index, body)| {
                 if collision_blacklist.contains(&index) {
