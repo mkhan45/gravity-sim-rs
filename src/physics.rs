@@ -45,7 +45,7 @@ pub fn angle(a: &Point2, b: &Point2) -> f32{
     else {restricted_dom}
 }
 
-pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) -> Vec<Body>{
+pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, step_size: &f32) -> Vec<Body>{
         let mut bodies = bodies.clone();
         let mut collision_blacklist = HashSet::new();
         let mut collision_bodies = Vec::new();
@@ -76,8 +76,8 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator) ->
             
             bodies[current_body_i].update_trail();
             match method {
-                &Integrator::Euler => bodies[current_body_i].update_euler(),
-                &Integrator::Verlet => bodies[current_body_i].update_verlet(),
+                &Integrator::Euler => bodies[current_body_i].update_euler(step_size),
+                &Integrator::Verlet => bodies[current_body_i].update_verlet(step_size),
             };
         }
 

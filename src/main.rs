@@ -30,6 +30,7 @@ struct MainState {
     integrator: Integrator,
     help_menu: bool,
     fast_forward: usize,
+    step_size: f32,
 }
 
 type Point2 = na::Point2<f32>;
@@ -62,6 +63,7 @@ impl MainState {
             integrator: Integrator::Verlet,
             help_menu: false,
             fast_forward: 1,
+            step_size: 1.0,
         }
     }
 }
@@ -72,12 +74,13 @@ impl event::EventHandler for MainState {
         microprofile::flip();
 
         if !self.paused{ //physics sim
-            for i in 0..self.fast_forward{
-                self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator);
-                for i in 0..self.bodies.len(){
+            (0..self.fast_forward).for_each(|_i|{
+                self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator, &self.step_size);
+
+                (0..self.bodies.len()).for_each(|i|{
                     self.bodies[i].trail_length = self.trail_length;
-                }
-            }
+                })
+            })
         }
 
         //draw prediction
@@ -95,8 +98,8 @@ impl event::EventHandler for MainState {
                 self.predict_body.update_trail();
 
                 match self.integrator{
-                    Integrator::Euler => self.predict_body.update_euler(),
-                    Integrator::Verlet => self.predict_body.update_verlet(),
+                    Integrator::Euler => self.predict_body.update_euler(&self.step_size),
+                    Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
                 };
             }
         }
@@ -119,6 +122,7 @@ impl event::EventHandler for MainState {
                     Prediction Speed: {prediction_speed}
                     Integrator: {method}
                     Sim Speed: {sim_speed}
+                    Step Size: {step_size}
                     Press H for keybinds
                     ",
                     x = self.offset.x,
@@ -129,7 +133,8 @@ impl event::EventHandler for MainState {
                     trail_length = self.trail_length,
                     prediction_speed = self.predict_speed,
                     method = format!("{:?}", self.integrator),
-                    sim_speed = self.fast_forward);
+                    sim_speed = self.fast_forward,
+                    step_size = self.step_size);
 
                 let text = graphics::Text::new(info);
                 graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
@@ -240,6 +245,10 @@ impl event::EventHandler for MainState {
                     Space to pause.
 
                     I to change integration method
+
+                    1 and 2 to change sim speed (affects performance, not precision)
+
+                    3 and 4 to change step size (affects precision, not performance, lower is better)
                 ";
 
             let text = graphics::Text::new(help);
@@ -348,6 +357,12 @@ impl event::EventHandler for MainState {
             input::keyboard::KeyCode::Key1 => if self.fast_forward == 1 {1} else {self.fast_forward - 1},
             input::keyboard::KeyCode::Key2 => self.fast_forward + 1,
             _ => self.fast_forward,
+        };
+
+        self.step_size += match keycode {
+            input::keyboard::KeyCode::Key3 => -0.1,
+            input::keyboard::KeyCode::Key4 => 0.1,
+            _ => 0.0,
         };
 
         match keycode{ //misc keys
