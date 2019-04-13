@@ -314,6 +314,7 @@ impl event::EventHandler for MainState {
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
         self.zoom *= 1.0 + (y * 0.1); 
+        self.zoom = ((self.zoom * 100000.0).round())/100000.0;
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
@@ -396,6 +397,9 @@ impl event::EventHandler for MainState {
         };
 
         if self.radius < 1.0 {self.radius = 1.0};
+        self.radius = (self.radius * 1000.0).round()/1000.0;
+        self.density = (self.density * 1000.0).round()/1000.0;
+        self.step_size = (self.step_size * 1000.0).round()/1000.0;
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
