@@ -46,7 +46,7 @@ impl Body {
 
     }
 
-    pub fn update_euler(&mut self, step_size: &f32){ //implicit euler
+    pub fn update_euler(&mut self, step_size: &f32){
         microprofile::scope!("Update", "Bodies");
 
         self.pos += Vector2::new(self.velocity.x * step_size, self.velocity.y * step_size);

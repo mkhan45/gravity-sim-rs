@@ -83,7 +83,7 @@ impl event::EventHandler for MainState {
             })
         }
 
-        //draw prediction
+        //simulate prediction
         if self.mouse_pressed{
             for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
                 self.predict_body.current_accel = self.bodies.iter()
@@ -143,34 +143,50 @@ impl event::EventHandler for MainState {
             let params = graphics::DrawParam::new()
                 .dest(self.offset)
                 .scale(Vector2::new(self.zoom, self.zoom));
-
+            
+            let mut mesh = graphics::MeshBuilder::new();
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
                 if self.trail_length > 1 { //trail
-                    let trail = graphics::Mesh::new_line(
-                        ctx,
+                    // let trail = graphics::Mesh::new_line(
+                    //     ctx,
+                    //     &self.bodies[i].trail.as_slices().0,
+                    //     0.25 * self.bodies[i].radius,
+                    //     graphics::Color::new(0.1, 0.25, 1.0, 0.5)
+                    // );
+
+                    // match trail {
+                    //     Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
+                    //     Err(_error) => {},
+                    // };
+
+                    let result = mesh.line(
                         &self.bodies[i].trail.as_slices().0,
                         0.25 * self.bodies[i].radius,
-                        graphics::Color::new(0.1, 0.25, 1.0, 0.5)
-                    );
+                        graphics::Color::new(0.1, 0.25, 1.0, 0.5));
 
-                    match trail {
-                        Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-                        Err(_error) => {},
+                    match result {
+                        Ok(_t) => {},
+                        Err(_err) => {},
                     };
                 }
 
-                let body = graphics::Mesh::new_circle( //draw body
-                    ctx,
+                mesh.circle(
                     graphics::DrawMode::fill(),
                     self.bodies[i].pos,
                     self.bodies[i].radius,
                     2.0,
-                    graphics::Color::new(1.0, 1.0, 1.0, 1.0))
-                    .expect("error building body mesh");
+                    graphics::Color::new(1.0, 1.0, 1.0, 1.0));
 
-                graphics::draw(ctx, &body, params).expect("error drawing body");
             }
+
+            let built_mesh = mesh.build(ctx);
+
+            match built_mesh {
+                Ok(mesh) => graphics::draw(ctx, &mesh, params).expect("error drawing body"),
+                Err(_err) => {},
+            }
+
 
             if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
                 if self.predict_body.trail.len() > 2{
