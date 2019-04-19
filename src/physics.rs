@@ -46,53 +46,60 @@ pub fn angle(a: &Point2, b: &Point2) -> f32{
 }
 
 pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, step_size: &f32) -> Vec<Body>{
-        let mut bodies = bodies.clone();
-        let mut collision_blacklist = HashSet::new();
-        let mut collision_bodies = Vec::new();
         microprofile::scope!("Update velocities/collide", "Calculations");
 
-        for current_body_i in 0..bodies.len(){
-            bodies[current_body_i].current_accel = Vector2::new(0.0, 0.0);
+        let bodies_clone = bodies.clone();
+        let mut bodies = bodies.clone();
+        bodies.par_iter_mut()
+            .for_each(|current_body|{
+                current_body.current_accel = Vector2::new(0.0, 0.0);
+                bodies_clone.iter()
+                    .enumerate()
+                    .for_each(|(other_i, other_body)|{
+                        let r = distance(&other_body.pos, &current_body.pos);
 
-            for other_body_i in 0..bodies.len(){
-                if other_body_i != current_body_i {
-                    let other_body = &bodies[other_body_i].clone();
-                    let current_body = &mut bodies[current_body_i];
+                        if r <= other_body.radius + current_body.radius{
+                            current_body.collision = Some(other_i);
+                        }else{
+                            let a_mag = (G*&other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
+                            let angle = angle(&other_body.pos, &current_body.pos);
 
-                    let r = distance(&other_body.pos, &current_body.pos);
-                    let a_mag = (G*other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
-                    let angle = angle(&other_body.pos, &current_body.pos);
+                            current_body.current_accel += Vector2::new(angle.cos() * a_mag, angle.sin() * a_mag);
+                        }
+                    });
 
-                    //if two bodies collide, add them to remove list and create new body that's a combination of both
-                    if r <= other_body.radius + current_body.radius && !collision_blacklist.contains(&current_body_i){
-                        collision_blacklist.insert(current_body_i);
-                        collision_blacklist.insert(other_body_i);
-                        collision_bodies.push(collide(&current_body, &other_body));
+                current_body.update_trail();
+                match method{
+                    &Integrator::Euler => current_body.update_euler(step_size),
+                    &Integrator::Verlet => current_body.update_verlet(step_size),
+                };
+            });
+        
+        
+        let mut collided: HashSet<usize> = HashSet::new();
+
+        (0..bodies.len()).for_each(|i|{
+            match bodies[i].collision {
+                None => {},
+                Some(index) => {
+                    if !collided.contains(&index) && i != index{
+                        bodies.push(collide(&bodies[i], &bodies[index]));
+                        collided.insert(index);
+                        collided.insert(i);
                     }
-
-                    current_body.current_accel += Vector2::new(angle.cos() * a_mag, angle.sin() * a_mag);
                 }
             }
-            
-            bodies[current_body_i].update_trail();
-            match method {
-                &Integrator::Euler => bodies[current_body_i].update_euler(step_size),
-                &Integrator::Verlet => bodies[current_body_i].update_verlet(step_size),
-            };
-        }
+        });
 
-        bodies = bodies.par_iter() //remove all bodies in collision_blacklist
+        bodies.par_iter()
             .enumerate()
-            .filter_map(|(index, body)| {
-                if collision_blacklist.contains(&index) {
+            .filter_map(|(index, body)|{
+                if collided.contains(&index){
                     None
-                } else {
-                    Some(body.clone())
+                }else {
+                    Some(body)
                 }
-            }).collect();
-        
-        bodies.append(&mut collision_bodies);
-        return bodies;
+            }).collect()
 }
 
 #[derive(Debug, Clone)]

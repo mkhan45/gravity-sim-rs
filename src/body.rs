@@ -15,6 +15,7 @@ pub struct Body {
     pub trail_length: usize,
     pub past_accel: Vector2,
     pub current_accel: Vector2,
+    pub collision: Option<usize>,
 }
 
 impl Body {
@@ -32,6 +33,7 @@ impl Body {
             trail_length: 120,
             past_accel: Vector2::new(0.0, 0.0),
             current_accel: Vector2::new(0.0, 0.0),
+            collision: None,
         }
     }
 
