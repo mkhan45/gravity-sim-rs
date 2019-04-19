@@ -50,12 +50,14 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
 
         let bodies_clone = bodies.clone();
         let mut bodies = bodies.clone();
-        bodies.par_iter_mut()
-            .for_each(|current_body|{
+
+        bodies.par_iter_mut() //parallel, so I can only change stuff in the iterator
+            .for_each(|current_body|{ //in this case I can only change current_body
                 current_body.current_accel = Vector2::new(0.0, 0.0);
-                bodies_clone.iter()
+
+                bodies_clone.iter() //could maybe make this parallel by folding into a tuple (accel, collision)
                     .enumerate()
-                    .for_each(|(other_i, other_body)|{
+                    .for_each(|(other_i, other_body)|{ //other_body is an old version of it from before the loop
                         let r = distance(&other_body.pos, &current_body.pos);
 
                         if r <= other_body.radius + current_body.radius{
@@ -78,7 +80,8 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
         
         let mut collided: HashSet<usize> = HashSet::new();
 
-        (0..bodies.len()).for_each(|i|{
+        //because there are duplicate collisions we need a set to keep track
+        (0..bodies.len()).for_each(|i|{ 
             match bodies[i].collision {
                 None => {},
                 Some(index) => {
@@ -91,13 +94,14 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
             }
         });
 
+        //remove collided
         bodies.par_iter()
             .enumerate()
             .filter_map(|(index, body)|{
                 if collided.contains(&index){
                     None
                 }else {
-                    Some(body)
+                    Some(body.to_owned())
                 }
             }).collect()
 }

@@ -148,18 +148,6 @@ impl event::EventHandler for MainState {
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
                 if self.trail_length > 1 { //trail
-                    // let trail = graphics::Mesh::new_line(
-                    //     ctx,
-                    //     &self.bodies[i].trail.as_slices().0,
-                    //     0.25 * self.bodies[i].radius,
-                    //     graphics::Color::new(0.1, 0.25, 1.0, 0.5)
-                    // );
-
-                    // match trail {
-                    //     Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-                    //     Err(_error) => {},
-                    // };
-
                     let result = mesh.line(
                         &self.bodies[i].trail.as_slices().0,
                         0.25 * self.bodies[i].radius,
