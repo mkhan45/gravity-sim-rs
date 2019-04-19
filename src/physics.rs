@@ -55,7 +55,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
             .for_each(|current_body|{ //in this case I can only change current_body
                 current_body.current_accel = Vector2::new(0.0, 0.0);
 
-                bodies_clone.iter() //could maybe make this parallel by folding into a tuple (accel, collision)
+                &bodies_clone.iter() //could maybe make this parallel by folding into a tuple (accel, collision)
                     .enumerate()
                     .for_each(|(other_i, other_body)|{ //other_body is an old version of it from before the loop
                         let r = distance(&other_body.pos, &current_body.pos);
@@ -95,18 +95,23 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
         });
 
         //remove collided
-        bodies.par_iter()
-            .enumerate()
-            .filter_map(|(index, body)|{
-                if collided.contains(&index){
-                    None
-                }else {
-                    Some(body.to_owned())
-                }
-            }).collect()
+
+        if collided.len() != 0{
+            bodies.par_iter()
+                .enumerate()
+                .filter_map(|(index, body)|{
+                    if collided.contains(&index){
+                        None
+                    }else {
+                        Some(body.to_owned())
+                    }
+                }).collect()
+        }else{
+            bodies
+        }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Integrator{
     Euler,
     Verlet,

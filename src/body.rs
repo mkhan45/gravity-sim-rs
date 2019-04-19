@@ -5,7 +5,7 @@ type Point2 = na::Point2<f32>;
 type Vector2 = na::Vector2<f32>;
 
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Body {
     pub pos: Point2,
     pub mass: f32,

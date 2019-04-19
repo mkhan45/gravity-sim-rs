@@ -428,7 +428,7 @@ pub fn main() -> GameResult{
         .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
         .build().expect("error building context");
-    let state = &mut MainState::new().clone();
+    let state = &mut MainState::new();
 
     microprofile::init();
     microprofile::set_enable_all_groups(true);
