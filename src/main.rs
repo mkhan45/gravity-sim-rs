@@ -82,42 +82,56 @@ impl State for MainState {
                 })
             })
         }
+        
+        
 
         if window.mouse()[MouseButton::Left].is_down(){
+            
             let x = window.mouse().pos().x;
             let y = window.mouse().pos().y;
 
-            let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
-            let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
-
-            self.bodies.push(Body::new(
-                    self.start_point,
-                    self.radius.powi(3) * self.density,
-                    self.radius,
-                    Vector2::new(0.0, 0.0))
-            );
-        }
-
-        //simulate prediction
-        if self.mouse_pressed{
-            for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
-                self.predict_body.current_accel = self.bodies.iter()
-                    .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
-                        let r = distance(&body.pos, &self.predict_body.pos);
-                        let a_mag = (G*body.mass)/(r.powi(2));
-                        let angle = angle(&body.pos, &self.predict_body.pos);
-                        acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
-                    });
-
-                self.predict_body.trail_length += 1; //infinite trail length
-                self.predict_body.update_trail();
-
-                match self.integrator{
-                    Integrator::Euler => self.predict_body.update_euler(&self.step_size),
-                    Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
-                };
+            if self.mouse_pressed == false{ //on_press() basically
+                self.start_point = Point2::new(x, y);
             }
+
+
+            self.mouse_pressed = true;
+            self.mouse_pos = Point2::new(x, y);
+        }else {
+            let x = window.mouse().pos().x;
+            let y = window.mouse().pos().y;
+
+            if self.mouse_pressed == true { //on_release() kind of
+                self.bodies.push(Body::new(
+                        Point2::new(x, y),
+                        self.radius.powi(3) * self.density,
+                        self.radius,
+                        Point2::new(x, y) - self.start_point));
+            }
+
+            self.mouse_pressed = false;
         }
+
+        ////simulate prediction
+        //if self.mouse_pressed{
+        //    for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
+        //        self.predict_body.current_accel = self.bodies.iter()
+        //            .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
+        //                let r = distance(&body.pos, &self.predict_body.pos);
+        //                let a_mag = (G*body.mass)/(r.powi(2));
+        //                let angle = angle(&body.pos, &self.predict_body.pos);
+        //                acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
+        //            });
+
+        //        self.predict_body.trail_length += 1; //infinite trail length
+        //        self.predict_body.update_trail();
+
+        //        match self.integrator{
+        //            Integrator::Euler => self.predict_body.update_euler(&self.step_size),
+        //            Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
+        //        };
+        //    }
+        //}
 
         Ok(())
     }
@@ -423,6 +437,8 @@ pub fn main(){
         vsync: false, // don't use VSync, we're limiting to 10 FPS on our own
         ..Settings::default()
     });
+
+    println!("test");
 }
 
 fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {

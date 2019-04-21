@@ -49,7 +49,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
         let bodies_clone = bodies.clone();
         let mut bodies = bodies.clone();
 
-        bodies.par_iter_mut() //parallel, so I can only change stuff in the iterator
+        bodies.iter_mut() //parallel, so I can only change stuff in the iterator
             .for_each(|current_body|{ //in this case I can only change current_body
                 current_body.current_accel = Vector2::new(0.0, 0.0);
 
