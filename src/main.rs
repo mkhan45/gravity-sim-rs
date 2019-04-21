@@ -4,7 +4,7 @@ use quicksilver::{
     geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
     graphics::{Background, Background::Col, Color},
     lifecycle::{Settings, State, Window, run},
-    input::{MouseButton}
+    input::{MouseButton, Key}
 };
 
 use nalgebra as na;
@@ -82,11 +82,11 @@ impl State for MainState {
                 })
             })
         }
-        
-        
+
+
 
         if window.mouse()[MouseButton::Left].is_down(){
-            
+
             let x = window.mouse().pos().x;
             let y = window.mouse().pos().y;
 
@@ -110,6 +110,19 @@ impl State for MainState {
             }
 
             self.mouse_pressed = false;
+        }
+
+
+        if window.keyboard()[Key::Right].is_down(){
+            self.offset.x -= 5.0;
+        }else if window.keyboard()[Key::Left].is_down(){
+            self.offset.x += 5.0;
+        }
+
+        if window.keyboard()[Key::Up].is_down(){
+            self.offset.y += 5.0;
+        }else if window.keyboard()[Key::Down].is_down(){
+            self.offset.y -= 5.0;
         }
 
         ////simulate prediction
