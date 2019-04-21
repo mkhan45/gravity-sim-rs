@@ -85,10 +85,12 @@ impl State for MainState {
 
 
 
+        let x = window.mouse().pos().x - self.offset.x;
+        let y = window.mouse().pos().y - self.offset.y;
+        self.mouse_pos = Point2::new(x, y);
+
         if window.mouse()[MouseButton::Left].is_down(){
 
-            let x = window.mouse().pos().x;
-            let y = window.mouse().pos().y;
 
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
@@ -96,11 +98,7 @@ impl State for MainState {
 
 
             self.mouse_pressed = true;
-            self.mouse_pos = Point2::new(x, y);
         }else {
-            let x = window.mouse().pos().x;
-            let y = window.mouse().pos().y;
-
             if self.mouse_pressed == true { //on_release() kind of
                 self.bodies.push(Body::new(
                         Point2::new(x, y),
@@ -240,22 +238,20 @@ impl State for MainState {
                 //     0.25 * self.radius,
                 //     graphics::Color::new(1.0, 1.0, 1.0, 0.8))
                 //     .expect("error building preview line mesh");
-                
+
                 let line = Line::new(
                     self.start_point,
                     self.mouse_pos);
-                
-                
+
+
                 window.draw_ex(&line, Background::Col(Color::WHITE), params, 0);
-            
-
-
-                let outline = Circle::new(
-                    self.start_point,
-                    self.radius);
-
-                window.draw_ex(&outline, Background::Col(Color::WHITE.with_alpha(0.8)), params, 0);
             }
+
+            let outline = Circle::new(
+                self.mouse_pos,
+                self.radius);
+
+            window.draw_ex(&outline, Background::Col(Color::WHITE.with_alpha(0.8)), params, 0);
         }else {
             ////if help_menu is true
             //let help = "
