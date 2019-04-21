@@ -125,6 +125,12 @@ impl State for MainState {
             self.offset.y -= 5.0;
         }
 
+        if window.keyboard()[Key::LShift].is_down(){
+            self.zoom *= 0.95;
+        }else if window.keyboard()[Key::RShift].is_down(){
+            self.zoom *= 1.0/0.95;
+        }
+
         ////simulate prediction
         //if self.mouse_pressed{
         //    for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
@@ -445,9 +451,9 @@ impl State for MainState {
 
 pub fn main(){
     run::<MainState>("N-body Gravity Sim", Vector::new(1000, 800), Settings {
-        draw_rate: 1000. / 60., // 10 FPS are enough
-        update_rate: 1000. / 60., // every second to make it appear like a clock
-        vsync: false, // don't use VSync, we're limiting to 10 FPS on our own
+        draw_rate: 1.0,  //draw as fast as possible basically
+        update_rate: 1000. / 60., 
+        vsync: true, // don't use VSync, we're limiting to 10 FPS on our own
         ..Settings::default()
     });
 
