@@ -4,6 +4,7 @@ use quicksilver::{
     geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
     graphics::{Background, Background::Col, Color},
     lifecycle::{Settings, State, Window, run},
+    input::{MouseButton}
 };
 
 use nalgebra as na;
@@ -71,7 +72,7 @@ impl State for MainState {
         })
     }
 
-    fn update(&mut self, _window: &mut Window) -> Result<()> {
+    fn update(&mut self, window: &mut Window) -> Result<()> {
         if !self.paused{ //physics sim
             (0..self.fast_forward).for_each(|_i|{
                 self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator, &self.step_size);
@@ -80,6 +81,21 @@ impl State for MainState {
                     self.bodies[i].trail_length = self.trail_length;
                 })
             })
+        }
+
+        if window.mouse()[MouseButton::Left].is_down(){
+            let x = window.mouse().pos().x;
+            let y = window.mouse().pos().y;
+
+            let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
+            let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
+
+            self.bodies.push(Body::new(
+                    self.start_point,
+                    self.radius.powi(3) * self.density,
+                    self.radius,
+                    Vector2::new(0.0, 0.0))
+            );
         }
 
         //simulate prediction
@@ -141,7 +157,7 @@ impl State for MainState {
             }
 
             let params = Transform::translate(self.offset) * Transform::scale(Vector::new(self.zoom, self.zoom));
-            
+
             for i in 0..self.bodies.len(){ //draw trail and bodies
                 // if self.trail_length > 1 { //trail
                 //     let result = mesh.line(
@@ -156,7 +172,7 @@ impl State for MainState {
                 // }
 
                 let circle = Circle::new(self.bodies[i].pos, self.bodies[i].radius);
-                window.draw_ex(&circle, Background::Col(Color::BLACK), params, 0);
+                window.draw_ex(&circle, Background::Col(Color::WHITE), params, 0);
             }
 
             // if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
@@ -402,8 +418,8 @@ impl State for MainState {
 
 pub fn main(){
     run::<MainState>("N-body Gravity Sim", Vector::new(1000, 800), Settings {
-        draw_rate: 1000. / 10., // 10 FPS are enough
-        update_rate: 1000., // every second to make it appear like a clock
+        draw_rate: 1000. / 60., // 10 FPS are enough
+        update_rate: 1000. / 60., // every second to make it appear like a clock
         vsync: false, // don't use VSync, we're limiting to 10 FPS on our own
         ..Settings::default()
     });
