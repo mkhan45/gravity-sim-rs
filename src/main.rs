@@ -233,28 +233,29 @@ impl State for MainState {
             //     graphics::draw(ctx, &body, params).expect("error drawing prediction body");
             // }
 
-            // if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
-            //     let line = graphics::Mesh::new_line(
-            //         ctx,
-            //         &vec![self.start_point, self.mouse_pos][..],
-            //         0.25 * self.radius,
-            //         graphics::Color::new(1.0, 1.0, 1.0, 0.8))
-            //         .expect("error building preview line mesh");
+            if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
+                // let line = graphics::Mesh::new_line(
+                //     ctx,
+                //     &vec![self.start_point, self.mouse_pos][..],
+                //     0.25 * self.radius,
+                //     graphics::Color::new(1.0, 1.0, 1.0, 0.8))
+                //     .expect("error building preview line mesh");
+                
+                let line = Line::new(
+                    self.start_point,
+                    self.mouse_pos);
+                
+                
+                window.draw_ex(&line, Background::Col(Color::WHITE), params, 0);
+            
 
-            //     graphics::draw(ctx, &line, params).expect("error drawing preview line");
-            // }
 
+                let outline = Circle::new(
+                    self.start_point,
+                    self.radius);
 
-            // let outline = graphics::Mesh::new_circle( //draw outline
-            //     ctx,
-            //     graphics::DrawMode::fill(),
-            //     if self.mouse_pressed {self.start_point} else {self.mouse_pos},
-            //     self.radius,
-            //     2.0,
-            //     graphics::Color::new(1.0, 1.0, 1.0, 0.25))
-            //     .expect("error building outline");
-
-            // graphics::draw(ctx, &outline, params).expect("error drawing outline");
+                window.draw_ex(&outline, Background::Col(Color::WHITE.with_alpha(0.8)), params, 0);
+            }
         }else {
             ////if help_menu is true
             //let help = "
@@ -452,7 +453,7 @@ impl State for MainState {
 pub fn main(){
     run::<MainState>("N-body Gravity Sim", Vector::new(1000, 800), Settings {
         draw_rate: 1.0,  //draw as fast as possible basically
-        update_rate: 1000. / 60., 
+        update_rate: 1000. / 30., 
         vsync: true, // don't use VSync, we're limiting to 10 FPS on our own
         ..Settings::default()
     });
