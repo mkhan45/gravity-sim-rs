@@ -1,6 +1,10 @@
 # gravity-sim
 N body gravity sim with rust and ggez, made to learn rust
 
+Web port made with quicksilver, lots of features missing:
+
+https://mkhan45.github.io/gravity-sim-rs/
+
 ![](preview_new.gif)
 
 
