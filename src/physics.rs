@@ -95,7 +95,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
         //remove collided
 
         if collided.len() != 0{
-            bodies.par_iter()
+            bodies.iter()
                 .enumerate()
                 .filter_map(|(index, body)|{
                     if collided.contains(&index){
