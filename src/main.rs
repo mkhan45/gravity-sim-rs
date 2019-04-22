@@ -70,8 +70,10 @@ impl MainState {
 
 
 impl event::EventHandler for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        microprofile::flip();
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        let mouse_pos = input::mouse::position(ctx);
+        self.mouse_pos.x = (mouse_pos.x - self.offset.x)/self.zoom;
+        self.mouse_pos.y = (mouse_pos.y - self.offset.y)/self.zoom;
 
         if !self.paused{ //physics sim
             (0..self.fast_forward).for_each(|_i|{
@@ -317,8 +319,13 @@ impl event::EventHandler for MainState {
 
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
+        let prev_zoom = self.zoom.clone();
         self.zoom *= 1.0 + (y * 0.1); 
+        let delta_zoom = self.zoom - prev_zoom;
         self.zoom = ((self.zoom * 100000.0).round())/100000.0;
+
+        let focus = Vector2::new(self.mouse_pos.x + self.offset.x, self.mouse_pos.y + self.offset.y) * delta_zoom;
+        self.offset -= focus;
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
