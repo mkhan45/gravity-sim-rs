@@ -413,19 +413,20 @@ impl event::EventHandler for MainState {
         self.step_size = (self.step_size * 1000.0).round()/1000.0;
     }
 
-    fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
+    fn mouse_motion_event(&mut self, ctx: &mut Context, _x: f32, _y: f32, dx: f32, dy: f32){
         //this is to make the line when creating a new body and create the preview body
-
-        let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom); 
-        let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
-        self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
 
         if self.mouse_pressed {
             self.predict_body = Body::new(
                 self.start_point,
                 self.radius.powi(3) * self.density,
                 self.radius,
-                Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
+                Vector2::new((self.mouse_pos.x - self.start_point.x)/5.0 * self.zoom, (self.mouse_pos.y - self.start_point.y)/5.0 * self.zoom ))
+        }
+
+        if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle){
+            self.offset.x += dx/self.zoom;
+            self.offset.y += dy/self.zoom;
         }
     }
 }
