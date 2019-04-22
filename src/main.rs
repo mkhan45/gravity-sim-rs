@@ -4,7 +4,7 @@ use quicksilver::{
     geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
     graphics::{Background, Background::Col, Color},
     lifecycle::{Settings, State, Window, run},
-    input::{MouseButton, Key}
+    input::{MouseButton, Key, ButtonState}
 };
 
 use nalgebra as na;
@@ -85,8 +85,8 @@ impl State for MainState {
 
 
 
-        let x = window.mouse().pos().x - self.offset.x;
-        let y = window.mouse().pos().y - self.offset.y;
+        let x = window.mouse().pos().x;
+        let y = window.mouse().pos().y;
         self.mouse_pos = Point2::new(x, y);
 
         if window.mouse()[MouseButton::Left].is_down(){
@@ -94,6 +94,8 @@ impl State for MainState {
 
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
+                let point = inv_scale(self.mouse_pos, &self.offset, &self.zoom);
+                println!("x: {}, y: {}, zoom: {}", point.x, point.y, self.zoom);
             }
 
 
@@ -101,10 +103,10 @@ impl State for MainState {
         }else {
             if self.mouse_pressed == true { //on_release() kind of
                 self.bodies.push(Body::new(
-                        Point2::new(x, y),
+                        inv_scale(self.mouse_pos, &self.offset, &self.zoom),
                         self.radius.powi(3) * self.density,
                         self.radius,
-                        Point2::new(x, y) - self.start_point));
+                        self.mouse_pos - self.start_point));
             }
 
             self.mouse_pressed = false;
@@ -112,21 +114,36 @@ impl State for MainState {
 
 
         if window.keyboard()[Key::Right].is_down(){
-            self.offset.x -= 5.0;
+            self.offset.x += 5.0/self.zoom;
         }else if window.keyboard()[Key::Left].is_down(){
-            self.offset.x += 5.0;
+            self.offset.x -= 5.0/self.zoom;
         }
 
         if window.keyboard()[Key::Up].is_down(){
-            self.offset.y += 5.0;
+            self.offset.y -= 5.0/self.zoom;
         }else if window.keyboard()[Key::Down].is_down(){
-            self.offset.y -= 5.0;
+            self.offset.y += 5.0/self.zoom;
         }
 
         if window.keyboard()[Key::LShift].is_down(){
             self.zoom *= 0.95;
         }else if window.keyboard()[Key::RShift].is_down(){
             self.zoom *= 1.0/0.95;
+        }
+
+        if window.keyboard()[Key::G] == ButtonState::Pressed{
+            self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom));
+        }
+
+        if window.keyboard()[Key::D] == ButtonState::Pressed{
+            self.bodies = self.bodies.iter() //iterate through meshes and delete any under mouse
+                .filter_map(|body| {
+                    if distance(&self.mouse_pos, &body.pos) > body.radius {
+                        Some(body.clone())
+                    }else {
+                        None
+                    }
+                }).collect();
         }
 
         ////simulate prediction
@@ -187,8 +204,6 @@ impl State for MainState {
                 //graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
             }
 
-            let params = Transform::translate(self.offset) * Transform::scale(Vector::new(self.zoom, self.zoom));
-
             for i in 0..self.bodies.len(){ //draw trail and bodies
                 // if self.trail_length > 1 { //trail
                 //     let result = mesh.line(
@@ -201,9 +216,13 @@ impl State for MainState {
                 //         Err(_err) => {},
                 //     };
                 // }
+                
+                let pos = scale(self.bodies[i].pos, &self.offset, &self.zoom);
+                let circle = Circle::new(
+                    pos,
+                    self.bodies[i].radius * self.zoom);
 
-                let circle = Circle::new(self.bodies[i].pos, self.bodies[i].radius);
-                window.draw_ex(&circle, Background::Col(Color::WHITE), params, 0);
+                window.draw(&circle, Background::Col(Color::WHITE));
             }
 
             // if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
@@ -244,14 +263,14 @@ impl State for MainState {
                     self.mouse_pos);
 
 
-                window.draw_ex(&line, Background::Col(Color::WHITE), params, 0);
+                window.draw(&line, Background::Col(Color::WHITE));
             }
 
             let outline = Circle::new(
                 self.mouse_pos,
-                self.radius);
+                self.radius * self.zoom);
 
-            window.draw_ex(&outline, Background::Col(Color::WHITE.with_alpha(0.8)), params, 0);
+            window.draw(&outline, Background::Col(Color::WHITE.with_alpha(0.8)));
         }else {
             ////if help_menu is true
             //let help = "
@@ -473,4 +492,18 @@ fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
     });
 
     new_bodies
+}
+
+fn scale(mut point: Point2, offset: &Point2, scale: &f32) -> Point2{
+    point *= *scale;
+    point.x -= offset.x * *scale;
+    point.y -= offset.y * *scale;
+    point
+}
+
+fn inv_scale(mut point: Point2, offset: &Point2, scale: &f32) -> Point2{
+    point /= *scale;
+    point.x += offset.x * *scale;
+    point.y += offset.y * *scale;
+    point
 }
