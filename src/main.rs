@@ -95,7 +95,6 @@ impl State for MainState {
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
                 let point = inv_scale(self.mouse_pos, &self.offset, &self.zoom);
-                println!("x: {}, y: {}, zoom: {}", point.x, point.y, self.zoom);
             }
 
 
