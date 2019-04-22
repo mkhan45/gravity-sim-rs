@@ -94,7 +94,6 @@ impl State for MainState {
 
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
-                let point = inv_scale(self.mouse_pos, &self.offset, &self.zoom);
             }
 
 
@@ -102,7 +101,7 @@ impl State for MainState {
         }else {
             if self.mouse_pressed == true { //on_release() kind of
                 self.bodies.push(Body::new(
-                        inv_scale(self.mouse_pos, &self.offset, &self.zoom),
+                        scale(self.start_point, &self.offset, &self.zoom),
                         self.radius.powi(3) * self.density,
                         self.radius,
                         self.mouse_pos - self.start_point));
@@ -135,9 +134,10 @@ impl State for MainState {
         }
 
         if window.keyboard()[Key::D] == ButtonState::Pressed{
+            let mouse = inv_scale(self.mouse_pos, &self.offset, &self.zoom);
             self.bodies = self.bodies.iter() //iterate through meshes and delete any under mouse
                 .filter_map(|body| {
-                    if distance(&self.mouse_pos, &body.pos) > body.radius {
+                    if distance(&mouse, &body.pos) > body.radius {
                         Some(body.clone())
                     }else {
                         None
