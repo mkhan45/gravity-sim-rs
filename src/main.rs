@@ -101,7 +101,7 @@ impl State for MainState {
         }else {
             if self.mouse_pressed == true { //on_release() kind of
                 self.bodies.push(Body::new(
-                        scale(self.start_point, &self.offset, &self.zoom),
+                        inv_scale(self.start_point, &self.offset, &self.zoom),
                         self.radius.powi(3) * self.density,
                         self.radius,
                         self.mouse_pos - self.start_point));
