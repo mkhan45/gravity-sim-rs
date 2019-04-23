@@ -46,8 +46,6 @@ pub fn angle(a: &Point2, b: &Point2) -> f32{
 }
 
 pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, step_size: &f32) -> Vec<Body>{
-        microprofile::scope!("Update velocities/collide", "Calculations");
-
         let bodies_clone = bodies.clone();
         let mut bodies = bodies.clone();
 

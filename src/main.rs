@@ -1,4 +1,3 @@
-#[macro_use] extern crate microprofile;
 extern crate ggez;
 use ggez::*; use ggez::graphics; use ggez::nalgebra as na;
 use ggez::input;
@@ -110,7 +109,6 @@ impl event::EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        microprofile::scope!("Draw", "Main");
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0)); if !self.help_menu {
             {
                 //top left ui text
@@ -414,8 +412,8 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, _x: f32, _y: f32, dx: f32, dy: f32){
-        //this is to make the line when creating a new body and create the preview body
 
+        //this is to make the line when creating a new body and create the preview body
         if self.mouse_pressed {
             self.predict_body = Body::new(
                 self.start_point,
@@ -424,6 +422,7 @@ impl event::EventHandler for MainState {
                 Vector2::new((self.mouse_pos.x - self.start_point.x)/5.0 * self.zoom, (self.mouse_pos.y - self.start_point.y)/5.0 * self.zoom ))
         }
 
+        //move when holding middle click
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle){
             self.offset.x += dx/self.zoom;
             self.offset.y += dy/self.zoom;
@@ -438,8 +437,6 @@ pub fn main() -> GameResult{
         .build().expect("error building context");
     let state = &mut MainState::new();
 
-    microprofile::init();
-    microprofile::set_enable_all_groups(true);
     event::run(ctx, event_loop, state)
 }
 
