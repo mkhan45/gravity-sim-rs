@@ -90,8 +90,6 @@ impl State for MainState {
         self.mouse_pos = Point2::new(x, y);
 
         if window.mouse()[MouseButton::Left].is_down(){
-
-
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
             }
@@ -124,9 +122,21 @@ impl State for MainState {
         }
 
         if window.keyboard()[Key::LShift].is_down(){
+            let prev_zoom = self.zoom;
             self.zoom *= 0.95;
-        }else if window.keyboard()[Key::RShift].is_down(){
+            let delta_zoom = self.zoom - prev_zoom;
+
+            let focus = Vector2::new(self.mouse_pos.x + self.offset.x, self.mouse_pos.y + self.offset.y) * delta_zoom;
+            println!("{:?}", focus);
+            self.offset += focus;
+        }else if window.keyboard()[Key::LControl].is_down(){
+            let prev_zoom = self.zoom;
             self.zoom *= 1.0/0.95;
+            let delta_zoom = self.zoom - prev_zoom;
+
+            let focus = Vector2::new(self.mouse_pos.x - self.offset.x, self.mouse_pos.y - self.offset.y) * delta_zoom;
+            println!("{:?}", focus);
+            self.offset += focus;
         }
 
         if window.keyboard()[Key::G] == ButtonState::Pressed{
