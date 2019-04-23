@@ -127,7 +127,6 @@ impl State for MainState {
             let delta_zoom = self.zoom - prev_zoom;
 
             let focus = Vector2::new(self.mouse_pos.x + self.offset.x, self.mouse_pos.y + self.offset.y) * delta_zoom;
-            println!("{:?}", focus);
             self.offset += focus;
         }else if window.keyboard()[Key::LControl].is_down(){
             let prev_zoom = self.zoom;
@@ -135,7 +134,6 @@ impl State for MainState {
             let delta_zoom = self.zoom - prev_zoom;
 
             let focus = Vector2::new(self.mouse_pos.x - self.offset.x, self.mouse_pos.y - self.offset.y) * delta_zoom;
-            println!("{:?}", focus);
             self.offset += focus;
         }
 
