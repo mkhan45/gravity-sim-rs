@@ -9,6 +9,7 @@ type Vector2 = na::Vector2<f32>;
 pub struct Body {
     pub pos: Point2,
     pub mass: f32,
+    pub charge: f32,
     pub radius: f32,
     pub velocity: Vector2,
     pub trail: VecDeque<Point2>,
@@ -19,7 +20,7 @@ pub struct Body {
 }
 
 impl Body {
-    pub fn new(position: Point2, mass_assign: f32, rad: f32, vel: Vector2) -> Body{
+    pub fn new(position: Point2, mass_assign: f32, charge_assign: f32, rad: f32, vel: Vector2) -> Body{
         let mut trail_vec = VecDeque::new();
         trail_vec.push_back(Point2::new(position.x + rad/2.0, position.y + rad/2.0));
         trail_vec.push_back(Point2::new(position.x, position.y));
@@ -27,6 +28,7 @@ impl Body {
         Body {
             pos: position,
             mass: mass_assign,
+            charge: charge_assign,
             radius: rad,
             velocity: vel,
             trail: trail_vec,

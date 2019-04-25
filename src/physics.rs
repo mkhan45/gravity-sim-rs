@@ -29,6 +29,7 @@ pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that c
     Body::new(
         if body1.radius > body2.radius {Point2::new(body1.pos.x, body1.pos.y)} else {Point2::new(body2.pos.x, body2.pos.y)}, //take position of bigger body
         total_mass,
+        body1.charge + body2.charge,
         new_rad,
         total_momentum/total_mass,
     )

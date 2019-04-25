@@ -42,6 +42,7 @@ impl MainState {
             Body::new(
                 Point2::new(500.0, 400.0), //position
                 300000.0, //mass
+                0.0, //charge
                 100.0,  //radius
                 Vector2::new(0.0, 0.0)), //velocity
         ];
@@ -57,7 +58,7 @@ impl MainState {
             trail_length: 30,
             mouse_pressed: false,
             paused: false,
-            predict_body: Body::new(Point2::new(0.0, 0.0), 1.0, 1.0, Vector2::new(0.0, 0.0)),
+            predict_body: Body::new(Point2::new(0.0, 0.0), 1.0, 0.0, 1.0, Vector2::new(0.0, 0.0)),
             predict_speed: 1,
             integrator: Integrator::Verlet,
             help_menu: false,
@@ -109,13 +110,7 @@ impl event::EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 0.01));
-        let rect = graphics::Rect::new(0.0, 0.0, 1000.0, 800.0);
-        let rect = graphics::Mesh::new_rectangle(
-            ctx, 
-            graphics::DrawMode::fill(), rect, 
-            graphics::Color::new(0.0, 0.0, 0.0, 0.1)).unwrap();
-        graphics::draw(ctx, &rect, graphics::DrawParam::new());
+        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 0.01));
         if !self.help_menu {
             {
                 //top left ui text
@@ -311,6 +306,7 @@ impl event::EventHandler for MainState {
                 self.bodies.push(Body::new(
                         self.start_point,
                         self.radius.powi(3) * self.density,
+                        0.0, 
                         self.radius,
                         Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
                 );
@@ -392,6 +388,7 @@ impl event::EventHandler for MainState {
                     Body::new(
                         Point2::new(500.0, 400.0),
                         300000.0,
+                        0.0,
                         100.0,
                         Vector2::new(0.0, 0.0)),
                 ];
@@ -425,6 +422,7 @@ impl event::EventHandler for MainState {
             self.predict_body = Body::new(
                 self.start_point,
                 self.radius.powi(3) * self.density,
+                0.0,
                 self.radius,
                 Vector2::new((self.mouse_pos.x - self.start_point.x)/5.0 * self.zoom, (self.mouse_pos.y - self.start_point.y)/5.0 * self.zoom ))
         }
@@ -457,6 +455,7 @@ fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
             new_bodies.push(Body::new(
                     point,
                     radius.powi(3) * density,
+                    0.0,
                     *radius,
                     Vector2::new(0.0, 0.0)));
         });
