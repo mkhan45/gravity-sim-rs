@@ -10,6 +10,7 @@ type Point2 = na::Point2<f32>;
 type Vector2 = na::Vector2<f32>;
 
 const G: f32 = 6.674;
+const k: f32 = 900_000.0;
 
 pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that conserves momentum
     let body1_momentum = Vector2::new(body1.velocity.x * body1.mass, body1.velocity.y * body1.mass);
@@ -62,10 +63,11 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
                         if r <= other_body.radius + current_body.radius{
                             current_body.collision = Some(other_i);
                         }else{
-                            let a_mag = (G*&other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
+                            let g_mag = (G * &other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
+                            let c_mag = (k * &other_body.charge * &current_body.charge * -1.0)/(r.powi(2) * &current_body.mass);
                             let angle = angle(&other_body.pos, &current_body.pos);
 
-                            current_body.current_accel += Vector2::new(angle.cos() * a_mag, angle.sin() * a_mag);
+                            current_body.current_accel += Vector2::new(angle.cos() * (g_mag + c_mag), angle.sin() * (g_mag + c_mag));
                         }
                     });
 

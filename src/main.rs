@@ -30,6 +30,7 @@ struct MainState {
     help_menu: bool,
     fast_forward: usize,
     step_size: f32,
+    charge: f32,
 }
 
 type Point2 = na::Point2<f32>;
@@ -64,6 +65,7 @@ impl MainState {
             help_menu: false,
             fast_forward: 1,
             step_size: 1.0,
+            charge: 0.0,
         }
     }
 }
@@ -119,6 +121,7 @@ impl event::EventHandler for MainState {
                     Offset: {x}, {y}
                     Zoom: {zoom}
                     Density: {density}
+                    Charge: {charge}
                     Radius: {radius}
                     Trail length: {trail_length}
                     Prediction Speed: {prediction_speed}
@@ -131,6 +134,7 @@ impl event::EventHandler for MainState {
                     y = self.offset.y, 
                     zoom = self.zoom,
                     density = self.density,
+                    charge = self.charge,
                     radius = self.radius,
                     trail_length = self.trail_length,
                     prediction_speed = self.predict_speed,
@@ -149,24 +153,36 @@ impl event::EventHandler for MainState {
             let mut mesh = graphics::MeshBuilder::new();
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
-                // if self.trail_length > 1 { //trail
-                //     let result = mesh.line(
-                //         &self.bodies[i].trail.as_slices().0,
-                //         0.25 * self.bodies[i].radius,
-                //         graphics::Color::new(0.1, 0.25, 1.0, 0.5));
+                if self.trail_length > 1 { //trail
+                    let result = mesh.line(
+                        &self.bodies[i].trail.as_slices().0,
+                        0.25 * self.bodies[i].radius,
+                        graphics::Color::new(0.1, 0.25, 1.0, 0.5));
 
-                //     match result {
-                //         Ok(_t) => {},
-                //         Err(_err) => {},
-                //     };
-                // }
+                    match result {
+                        Ok(_t) => {},
+                        Err(_err) => {},
+                    };
+                }
+
+                
+                let mut r_val = 1.0;
+                let mut b_val = 1.0;
+
+                if self.bodies[i].charge < 0.0{
+                    r_val += self.bodies[i].charge / 5.0;
+                }else {
+                    b_val -= self.bodies[i].charge / 5.0;
+                }
+
+                let g_val = 1.0 - (r_val - b_val).abs();
 
                 mesh.circle(
                     graphics::DrawMode::fill(),
                     self.bodies[i].pos,
                     self.bodies[i].radius,
                     0.25,
-                    graphics::Color::new(1.0, 1.0, 1.0, 1.0));
+                    graphics::Color::new(r_val, g_val, b_val, 1.0));
 
             }
 
@@ -306,7 +322,7 @@ impl event::EventHandler for MainState {
                 self.bodies.push(Body::new(
                         self.start_point,
                         self.radius.powi(3) * self.density,
-                        0.0, 
+                        self.charge, 
                         self.radius,
                         Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
                 );
@@ -375,6 +391,12 @@ impl event::EventHandler for MainState {
         self.step_size += match keycode {
             input::keyboard::KeyCode::Key3 => -0.05,
             input::keyboard::KeyCode::Key4 => 0.05,
+            _ => 0.0,
+        };
+
+        self.charge += match keycode {
+            input::keyboard::KeyCode::V => -0.5,
+            input::keyboard::KeyCode::B => 0.5,
             _ => 0.0,
         };
 
