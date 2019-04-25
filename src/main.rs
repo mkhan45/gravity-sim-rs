@@ -109,7 +109,14 @@ impl event::EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0)); if !self.help_menu {
+        // graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 0.01));
+        let rect = graphics::Rect::new(0.0, 0.0, 1000.0, 800.0);
+        let rect = graphics::Mesh::new_rectangle(
+            ctx, 
+            graphics::DrawMode::fill(), rect, 
+            graphics::Color::new(0.0, 0.0, 0.0, 0.1)).unwrap();
+        graphics::draw(ctx, &rect, graphics::DrawParam::new());
+        if !self.help_menu {
             {
                 //top left ui text
                 let info = format!(
@@ -147,23 +154,23 @@ impl event::EventHandler for MainState {
             let mut mesh = graphics::MeshBuilder::new();
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
-                if self.trail_length > 1 { //trail
-                    let result = mesh.line(
-                        &self.bodies[i].trail.as_slices().0,
-                        0.25 * self.bodies[i].radius,
-                        graphics::Color::new(0.1, 0.25, 1.0, 0.5));
+                // if self.trail_length > 1 { //trail
+                //     let result = mesh.line(
+                //         &self.bodies[i].trail.as_slices().0,
+                //         0.25 * self.bodies[i].radius,
+                //         graphics::Color::new(0.1, 0.25, 1.0, 0.5));
 
-                    match result {
-                        Ok(_t) => {},
-                        Err(_err) => {},
-                    };
-                }
+                //     match result {
+                //         Ok(_t) => {},
+                //         Err(_err) => {},
+                //     };
+                // }
 
                 mesh.circle(
                     graphics::DrawMode::fill(),
                     self.bodies[i].pos,
                     self.bodies[i].radius,
-                    2.0,
+                    0.25,
                     graphics::Color::new(1.0, 1.0, 1.0, 1.0));
 
             }
@@ -195,7 +202,7 @@ impl event::EventHandler for MainState {
                     graphics::DrawMode::fill(),
                     self.predict_body.pos,
                     self.predict_body.radius,
-                    2.0,
+                    0.25,
                     graphics::Color::new(0.0, 1.0, 0.0, 0.8)).expect("error building prediction body");
 
                 graphics::draw(ctx, &body, params).expect("error drawing prediction body");
@@ -204,7 +211,7 @@ impl event::EventHandler for MainState {
             if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
                 let line = graphics::Mesh::new_line(
                     ctx,
-                    &vec![self.start_point, self.mouse_pos][..],
+                    &[self.start_point, self.mouse_pos][..],
                     0.25 * self.radius,
                     graphics::Color::new(1.0, 1.0, 1.0, 0.8))
                     .expect("error building preview line mesh");
@@ -370,8 +377,8 @@ impl event::EventHandler for MainState {
         };
 
         self.step_size += match keycode {
-            input::keyboard::KeyCode::Key3 => -0.1,
-            input::keyboard::KeyCode::Key4 => 0.1,
+            input::keyboard::KeyCode::Key3 => -0.05,
+            input::keyboard::KeyCode::Key4 => 0.05,
             _ => 0.0,
         };
 
