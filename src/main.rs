@@ -2,7 +2,7 @@ extern crate quicksilver;
 use quicksilver::{
     Result,
     geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
-    graphics::{Background, Background::Col, Color},
+    graphics::{Background, Background::Col, Color, Drawable},
     lifecycle::{Settings, State, Window, run},
     input::{MouseButton, Key, ButtonState}
 };
@@ -14,6 +14,8 @@ use body::Body;
 
 mod physics;
 use physics::*;
+
+use std::collections::VecDeque;
 
 use rayon::prelude::*;
 
@@ -210,7 +212,11 @@ impl State for MainState {
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
 
-                //todo: trails
+                let curve = draw_line(&self.bodies[i].trail, self.offset, self.zoom);
+
+                for segment in curve{
+                    window.draw(&segment, Background::Col(Color::from_rgba(95, 136, 255, 0.5)));
+                }
 
                 let pos = scale(self.bodies[i].pos, &self.offset, &self.zoom);
                 let circle = Circle::new(
@@ -305,4 +311,17 @@ fn inv_scale(mut point: Point2, offset: &Point2, scale: &f32) -> Point2{
     point.x += offset.x;
     point.y += offset.y;
     point
+}
+
+fn draw_line(points: &VecDeque<Point2>, offset: Point2, zoom: f32) -> Vec<Line>{
+        let mut curve: Vec<Line> = Vec::new();
+
+
+        (0..points.len() - 1).for_each(|i|{
+            let first = scale(points[i], &offset, &zoom);
+            let second = scale(points[i + 1], &offset, &zoom);
+            curve.push(Line::new(first, second));
+        });
+
+        curve
 }
