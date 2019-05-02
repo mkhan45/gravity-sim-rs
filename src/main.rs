@@ -29,9 +29,7 @@ struct MainState {
     radius: f32,
     mouse_pos: Point2,
     trail_length: usize,
-    mouse_pressed: bool,
-    paused: bool,
-    predict_body: Body,
+    mouse_pressed: bool, paused: bool, predict_body: Body,
     predict_speed: usize,
     integrator: Integrator,
     help_menu: bool,
@@ -110,15 +108,15 @@ impl State for MainState {
 
 
         if window.keyboard()[Key::Right].is_down(){
-            self.offset.x += 5.0/self.zoom;
+            self.offset.x += 10.0/self.zoom;
         }else if window.keyboard()[Key::Left].is_down(){
-            self.offset.x -= 5.0/self.zoom;
+            self.offset.x -= 10.0/self.zoom;
         }
 
         if window.keyboard()[Key::Up].is_down(){
-            self.offset.y -= 5.0/self.zoom;
+            self.offset.y -= 10.0/self.zoom;
         }else if window.keyboard()[Key::Down].is_down(){
-            self.offset.y += 5.0/self.zoom;
+            self.offset.y += 10.0/self.zoom;
         }
 
         if window.keyboard()[Key::LShift].is_down(){
@@ -180,7 +178,6 @@ impl State for MainState {
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::BLACK)?;
 
-        if !self.help_menu {
             {
                 ////top left ui text
                 //let info = format!(
@@ -212,18 +209,9 @@ impl State for MainState {
             }
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
-                // if self.trail_length > 1 { //trail
-                //     let result = mesh.line(
-                //         &self.bodies[i].trail.as_slices().0,
-                //         0.25 * self.bodies[i].radius,
-                //         graphics::Color::new(0.1, 0.25, 1.0, 0.5));
 
-                //     match result {
-                //         Ok(_t) => {},
-                //         Err(_err) => {},
-                //     };
-                // }
-                
+                //todo: trails
+
                 let pos = scale(self.bodies[i].pos, &self.offset, &self.zoom);
                 let circle = Circle::new(
                     pos,
@@ -258,13 +246,6 @@ impl State for MainState {
             // }
 
             if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
-                // let line = graphics::Mesh::new_line(
-                //     ctx,
-                //     &vec![self.start_point, self.mouse_pos][..],
-                //     0.25 * self.radius,
-                //     graphics::Color::new(1.0, 1.0, 1.0, 0.8))
-                //     .expect("error building preview line mesh");
-
                 let line = Line::new(
                     self.start_point,
                     self.mouse_pos);
@@ -274,209 +255,20 @@ impl State for MainState {
             }
 
             let outline = Circle::new(
-                self.mouse_pos,
+                if !self.mouse_pressed {self.mouse_pos} else {self.start_point},
                 self.radius * self.zoom);
 
             window.draw(&outline, Background::Col(Color::WHITE.with_alpha(0.8)));
-        }else {
-            ////if help_menu is true
-            //let help = "
-            //        Arrow keys to move
-
-            //        Scroll to zoom in/out
-
-            //        Q/A to increase/decrease radius of next placed body
-
-            //        W/S to increase/decrease density (try making it negative)
-
-            //        E/D to increase/decrease trail length (removing trails increases performance by a lot)
-
-            //        X/Z to increase/decrease prediction speed, setting it to 0 turns of predictions.
-
-            //        Left click to place a body, dragging before releasing makes an initial velocity vector.
-
-            //        Right click over a body to delete it.
-
-            //        G creates a 10x10 grid of bodies with the specified radii and densities.
-
-            //        R to reset.
-
-            //        Space to pause.
-
-            //        I to change integration method
-
-            //        1 and 2 to change sim speed (affects performance, not precision)
-
-            //        3 and 4 to change step size (affects precision, not performance, lower is better)
-            //    ";
-
-            //let text = graphics::Text::new(help);
-            //graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing help menu");
-        }
 
         Ok(())
     }
-
-    //fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
-    //    let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
-    //    let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
-
-    //    match button {
-    //        event::MouseButton::Left => {
-    //            self.start_point = Point2::new(zoomed_x, zoomed_y);
-    //            self.mouse_pressed = true;
-    //        },
-
-    //        event::MouseButton::Right => {
-    //            println!("Removing body at {} {}", zoomed_x, zoomed_y);
-    //            self.bodies = self.bodies.par_iter() //iterate through meshes and delete any under mouse
-    //                .filter_map(|body| {
-    //                    let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
-    //                    if distance(&mouse_pointer, &body.pos) > body.radius {
-    //                        Some(body.clone())
-    //                    }else {
-    //                        None
-    //                    }
-    //                }).collect();
-    //        }
-
-    //        _ => {},
-    //    };
-    //}
-
-    ////fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
-    //    let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
-    //    let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
-
-    //    match button {
-    //        event::MouseButton::Left => {
-    //            self.bodies.push(Body::new(
-    //                    self.start_point,
-    //                    self.radius.powi(3) * self.density,
-    //                    self.radius,
-    //                    Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
-    //            );
-    //        },
-
-    //        _ => {},
-    //    }
-
-    //    self.mouse_pressed = false;
-    //}
-
-
-    //fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
-    //    self.zoom *= 1.0 + (y * 0.1); 
-    //    self.zoom = ((self.zoom * 100000.0).round())/100000.0;
-    //}
-
-    //fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
-    //    self.offset.y += match keycode{
-    //        input::keyboard::KeyCode::Up => 50.0,
-    //        input::keyboard::KeyCode::Down => -50.0,
-    //        _ => 0.0,
-    //    };
-
-    //    self.offset.x += match keycode{
-    //        input::keyboard::KeyCode::Left => 50.0,
-    //        input::keyboard::KeyCode::Right => -50.0,
-    //        _ => 0.0,
-    //    };
-
-    //    self.density += match keycode{
-    //        input::keyboard::KeyCode::W => 0.05,
-    //        input::keyboard::KeyCode::S => -0.05,
-    //        _ => 0.0,
-    //    };
-
-    //    self.radius += match keycode{
-    //        input::keyboard::KeyCode::Q => 1.0,
-    //        input::keyboard::KeyCode::A => -1.0,
-    //        _ => 0.0,
-    //    };
-
-    //    self.trail_length = match keycode{
-    //        input::keyboard::KeyCode::E => self.trail_length + 1,
-    //        input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
-    //        _ => self.trail_length,
-    //    };
-
-    //    self.predict_speed = match keycode {
-    //        input::keyboard::KeyCode::X => self.predict_speed + 1,
-    //        input::keyboard::KeyCode::Z => if self.predict_speed != 0 {self.predict_speed - 1} else {0},
-    //        _ => self.predict_speed,
-    //    };
-
-    //    self.fast_forward = match keycode {
-    //        input::keyboard::KeyCode::Key1 => if self.fast_forward == 1 {1} else {self.fast_forward - 1},
-    //        input::keyboard::KeyCode::Key2 => self.fast_forward + 1,
-    //        _ => self.fast_forward,
-    //    };
-
-    //    self.step_size += match keycode {
-    //        input::keyboard::KeyCode::Key3 => -0.1,
-    //        input::keyboard::KeyCode::Key4 => 0.1,
-    //        _ => 0.0,
-    //    };
-
-    //    match keycode{ //misc keys
-    //        input::keyboard::KeyCode::Space => self.paused = !self.paused,
-
-    //        input::keyboard::KeyCode::G => self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom)),
-
-    //        input::keyboard::KeyCode::R => {
-    //            self.bodies = vec![
-    //                Body::new(
-    //                    Point2::new(500.0, 400.0),
-    //                    300000.0,
-    //                    100.0,
-    //                    Vector2::new(0.0, 0.0)),
-    //            ];
-    //            self.zoom = 1.0;
-    //            self.offset = Point2::new(0.0, 0.0);
-    //            self.fast_forward = 1;
-    //        }
-
-    //        input::keyboard::KeyCode::I => {
-    //            self.integrator = match self.integrator {
-    //                Integrator::Euler => Integrator::Verlet,
-    //                Integrator::Verlet => Integrator::Euler,
-    //            };
-    //        }
-
-    //        input::keyboard::KeyCode::H => self.help_menu = !self.help_menu,
-
-    //        _ => {},
-    //    };
-
-    //    if self.radius < 1.0 {self.radius = 1.0};
-    //    self.radius = (self.radius * 1000.0).round()/1000.0;
-    //    self.density = (self.density * 1000.0).round()/1000.0;
-    //    self.step_size = (self.step_size * 1000.0).round()/1000.0;
-    //}
-
-    //fn mouse_motion_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32, _dx: f32, _dy: f32){
-    //    //this is to make the line when creating a new body and create the preview body
-
-    //    let zoomed_x = (&_x - self.offset.x) * (1.0/self.zoom); 
-    //    let zoomed_y = (&_y - self.offset.y) * (1.0/self.zoom);
-    //    self.mouse_pos = Point2::new(zoomed_x, zoomed_y);
-
-    //    if self.mouse_pressed {
-    //        self.predict_body = Body::new(
-    //            self.start_point,
-    //            self.radius.powi(3) * self.density,
-    //            self.radius,
-    //            Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
-    //    }
-    //}
 }
 
 pub fn main(){
     run::<MainState>("N-body Gravity Sim", Vector::new(1000, 800), Settings {
         draw_rate: 1.0,  //draw as fast as possible basically
         update_rate: 1000. / 30., 
-        vsync: true, // don't use VSync, we're limiting to 10 FPS on our own
+        vsync: true,
         ..Settings::default()
     });
 
@@ -510,7 +302,7 @@ fn scale(mut point: Point2, offset: &Point2, scale: &f32) -> Point2{
 
 fn inv_scale(mut point: Point2, offset: &Point2, scale: &f32) -> Point2{
     point /= *scale;
-    point.x += offset.x * *scale;
-    point.y += offset.y * *scale;
+    point.x += offset.x;
+    point.y += offset.y;
     point
 }

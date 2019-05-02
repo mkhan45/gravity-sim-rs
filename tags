@@ -1,0 +1,68 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/45968eff/
+Body	src/body.rs	/^impl Body {$/;"	c
+Body	src/body.rs	/^pub struct Body {$/;"	s
+Euler	src/physics.rs	/^    Euler,$/;"	e	enum:Integrator
+Integrator	src/physics.rs	/^pub enum Integrator{$/;"	g
+MainState	src/main.rs	/^impl MainState {$/;"	c
+MainState	src/main.rs	/^impl event::EventHandler for MainState {$/;"	c
+MainState	src/main.rs	/^struct MainState {$/;"	s
+Point2	src/body.rs	/^type Point2 = na::Point2<f32>;$/;"	t
+Point2	src/main.rs	/^type Point2 = na::Point2<f32>;$/;"	t
+Point2	src/physics.rs	/^type Point2 = na::Point2<f32>;$/;"	t
+Vector2	src/body.rs	/^type Vector2 = na::Vector2<f32>;$/;"	t
+Vector2	src/main.rs	/^type Vector2 = na::Vector2<f32>;$/;"	t
+Vector2	src/physics.rs	/^type Vector2 = na::Vector2<f32>;$/;"	t
+Verlet	src/physics.rs	/^    Verlet,$/;"	e	enum:Integrator
+angle	src/physics.rs	/^pub fn angle(a: &Point2, b: &Point2) -> f32{$/;"	f
+bodies	src/main.rs	/^    bodies: Vec<Body>,$/;"	m	struct:MainState
+body	src/main.rs	/^mod body;$/;"	n
+charge	src/body.rs	/^    pub charge: f32,$/;"	m	struct:Body
+charge	src/main.rs	/^    charge: f32,$/;"	m	struct:MainState
+collide	src/physics.rs	/^pub fn collide(body1: &Body, body2: &Body) -> Body{ \/\/inelastic collision that conserves momen/;"	f
+collision	src/body.rs	/^    pub collision: Option<usize>,$/;"	m	struct:Body
+current_accel	src/body.rs	/^    pub current_accel: Vector2,$/;"	m	struct:Body
+density	src/main.rs	/^    density: f32,$/;"	m	struct:MainState
+distance	src/physics.rs	/^pub fn distance(a: &Point2, b: &Point2) -> f32{$/;"	f
+draw	src/main.rs	/^    fn draw(&mut self, ctx: &mut Context) -> GameResult {$/;"	P	implementation:MainState
+fast_forward	src/main.rs	/^    fast_forward: usize,$/;"	m	struct:MainState
+grid	src/main.rs	/^fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {$/;"	f
+help_menu	src/main.rs	/^    help_menu: bool,$/;"	m	struct:MainState
+integrator	src/main.rs	/^    integrator: Integrator,$/;"	m	struct:MainState
+key_down_event	src/main.rs	/^    fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods/;"	P	implementation:MainState
+main	src/main.rs	/^pub fn main() -> GameResult{$/;"	f
+mass	src/body.rs	/^    pub mass: f32,$/;"	m	struct:Body
+mouse_button_down_event	src/main.rs	/^    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32/;"	P	implementation:MainState
+mouse_button_up_event	src/main.rs	/^    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, /;"	P	implementation:MainState
+mouse_motion_event	src/main.rs	/^    fn mouse_motion_event(&mut self, ctx: &mut Context, _x: f32, _y: f32, dx: f32, dy: f32){$/;"	P	implementation:MainState
+mouse_pos	src/main.rs	/^    mouse_pos: Point2,$/;"	m	struct:MainState
+mouse_pressed	src/main.rs	/^    mouse_pressed: bool,$/;"	m	struct:MainState
+mouse_wheel_event	src/main.rs	/^    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { $/;"	P	implementation:MainState
+new	src/body.rs	/^    pub fn new(position: Point2, mass_assign: f32, charge_assign: f32, rad: f32, vel: Vector2) -/;"	P	implementation:Body
+new	src/main.rs	/^    fn new() -> Self {$/;"	P	implementation:MainState
+offset	src/main.rs	/^    offset: Point2,$/;"	m	struct:MainState
+past_accel	src/body.rs	/^    pub past_accel: Vector2,$/;"	m	struct:Body
+paused	src/main.rs	/^    paused: bool,$/;"	m	struct:MainState
+physics	src/main.rs	/^mod physics;$/;"	n
+pos	src/body.rs	/^    pub pos: Point2,$/;"	m	struct:Body
+predict_body	src/main.rs	/^    predict_body: Body,$/;"	m	struct:MainState
+predict_speed	src/main.rs	/^    predict_speed: usize,$/;"	m	struct:MainState
+radius	src/body.rs	/^    pub radius: f32,$/;"	m	struct:Body
+radius	src/main.rs	/^    radius: f32,$/;"	m	struct:MainState
+start_point	src/main.rs	/^    start_point: Point2,$/;"	m	struct:MainState
+step_size	src/main.rs	/^    step_size: f32,$/;"	m	struct:MainState
+trail	src/body.rs	/^    pub trail: VecDeque<Point2>,$/;"	m	struct:Body
+trail_length	src/body.rs	/^    pub trail_length: usize,$/;"	m	struct:Body
+trail_length	src/main.rs	/^    trail_length: usize,$/;"	m	struct:MainState
+update	src/main.rs	/^    fn update(&mut self, ctx: &mut Context) -> GameResult {$/;"	P	implementation:MainState
+update_euler	src/body.rs	/^    pub fn update_euler(&mut self, step_size: &f32){$/;"	P	implementation:Body
+update_trail	src/body.rs	/^    pub fn update_trail(&mut self){$/;"	P	implementation:Body
+update_velocities_and_collide	src/physics.rs	/^pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, step_size: &f32) -/;"	f
+update_verlet	src/body.rs	/^    pub fn update_verlet(&mut self, step_size: &f32){ \/\/verlet velocity$/;"	P	implementation:Body
+velocity	src/body.rs	/^    pub velocity: Vector2,$/;"	m	struct:Body
+zoom	src/main.rs	/^    zoom: f32,$/;"	m	struct:MainState
