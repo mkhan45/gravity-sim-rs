@@ -102,7 +102,7 @@ impl State for MainState {
                         inv_scale(self.start_point, &self.offset, &self.zoom),
                         self.radius.powi(3) * self.density,
                         self.radius,
-                        self.mouse_pos - self.start_point));
+                        (self.mouse_pos - self.start_point) * 0.5));
             }
 
             self.mouse_pressed = false;
