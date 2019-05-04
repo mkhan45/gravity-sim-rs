@@ -3,7 +3,7 @@ use quicksilver::{
     Result,
     geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
     graphics::{Background, Background::Col, Color, Drawable},
-    lifecycle::{Settings, State, Window, run},
+    lifecycle::{Settings, State, Window, run, Event},
     input::{MouseButton, Key, ButtonState}
 };
 
@@ -64,7 +64,7 @@ impl State for MainState {
             mouse_pressed: false,
             paused: false,
             predict_body: Body::new(Point2::new(0.0, 0.0), 1.0, 1.0, Vector2::new(0.0, 0.0)),
-            predict_speed: 1,
+            predict_speed: 50,
             integrator: Integrator::Verlet,
             help_menu: false,
             fast_forward: 1,
@@ -93,7 +93,6 @@ impl State for MainState {
             if self.mouse_pressed == false{ //on_press() basically
                 self.start_point = Point2::new(x, y);
             }
-
 
             self.mouse_pressed = true;
         }else {
@@ -154,26 +153,26 @@ impl State for MainState {
                 }).collect();
         }
 
-        ////simulate prediction
-        //if self.mouse_pressed{
-        //    for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
-        //        self.predict_body.current_accel = self.bodies.iter()
-        //            .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
-        //                let r = distance(&body.pos, &self.predict_body.pos);
-        //                let a_mag = (G*body.mass)/(r.powi(2));
-        //                let angle = angle(&body.pos, &self.predict_body.pos);
-        //                acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
-        //            });
+        //simulate prediction
+        if self.mouse_pressed{
+            for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
+                self.predict_body.current_accel = self.bodies.iter()
+                    .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
+                        let r = distance(&body.pos, &self.predict_body.pos);
+                        let a_mag = (G*body.mass)/(r.powi(2));
+                        let angle = angle(&body.pos, &self.predict_body.pos);
+                        acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
+                    });
 
-        //        self.predict_body.trail_length += 1; //infinite trail length
-        //        self.predict_body.update_trail();
+                self.predict_body.trail_length += 1; //infinite trail length
+                self.predict_body.update_trail();
 
-        //        match self.integrator{
-        //            Integrator::Euler => self.predict_body.update_euler(&self.step_size),
-        //            Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
-        //        };
-        //    }
-        //}
+                match self.integrator{
+                    Integrator::Euler => self.predict_body.update_euler(&self.step_size),
+                    Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
+                };
+            }
+        }
 
         Ok(())
     }
@@ -212,7 +211,6 @@ impl State for MainState {
             }
 
             for i in 0..self.bodies.len(){ //draw trail and bodies
-
                 let curve = draw_line(&self.bodies[i].trail, self.offset, self.zoom);
 
                 for segment in curve{
@@ -227,30 +225,22 @@ impl State for MainState {
                 window.draw(&circle, Background::Col(Color::WHITE));
             }
 
-            // if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
-            //     if self.predict_body.trail.len() > 2{
-            //         let trail = graphics::Mesh::new_line(
-            //             ctx,
-            //             &self.predict_body.trail.as_slices().0,
-            //             0.25 * self.predict_body.radius,
-            //             graphics::Color::new(0.0, 1.0, 0.1, 0.4));
+            if self.mouse_pressed && self.predict_speed != 0{ // draw prediction
+                if self.predict_body.trail.len() > 2{
+                    let trail = draw_line(&self.predict_body.trail, self.offset, self.zoom);
 
-            //         match trail {
-            //             Ok(line) => graphics::draw(ctx, &line, params).expect("error drawing trail"),
-            //             Err(_error) => {},
-            //         };
-            //     }
+                    for segment in trail{
+                        window.draw(&segment, Background::Col(Color::from_rgba(95, 255, 136, 0.5)));
+                    }
+                }
 
-            //     let body = graphics::Mesh::new_circle( //draw prediction body
-            //         ctx,
-            //         graphics::DrawMode::fill(),
-            //         self.predict_body.pos,
-            //         self.predict_body.radius,
-            //         2.0,
-            //         graphics::Color::new(0.0, 1.0, 0.0, 0.8)).expect("error building prediction body");
+                let pos = scale(self.predict_body.pos, &self.offset, &self.zoom);
+                let circle = Circle::new(
+                    pos,
+                    self.predict_body.radius * self.zoom);
 
-            //     graphics::draw(ctx, &body, params).expect("error drawing prediction body");
-            // }
+                window.draw(&circle, Background::Col(Color::GREEN));
+            }
 
             if self.mouse_pos != self.start_point && self.mouse_pressed{ //draw preview vector
                 let line = Line::new(
@@ -266,6 +256,21 @@ impl State for MainState {
                 self.radius * self.zoom);
 
             window.draw(&outline, Background::Col(Color::WHITE.with_alpha(0.8)));
+
+        Ok(())
+    }
+
+    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
+        match event{
+            &Event::MouseMoved(vector) => {
+                self.predict_body = Body::new(
+                    inv_scale(self.mouse_pos, &self.offset, &self.zoom),
+                    1.0,
+                    self.radius * self.zoom,
+                    (self.mouse_pos - self.start_point) * 0.5);
+            }
+            _ => {},
+        };
 
         Ok(())
     }
