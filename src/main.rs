@@ -138,7 +138,8 @@ impl State for MainState {
         }
 
         if window.keyboard()[Key::G] == ButtonState::Pressed{
-            self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom));
+            let start = scale(self.offset, &Point2::new(0.0, 0.0), &(-1.0 * self.zoom));
+            self.bodies.append(&mut grid(&start, &self.radius, &self.density, &self.zoom));
         }
 
         if window.keyboard()[Key::D] == ButtonState::Pressed{
