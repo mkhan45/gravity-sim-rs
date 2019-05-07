@@ -8,6 +8,9 @@ use body::Body;
 mod physics;
 use physics::*;
 
+mod input_type;
+use input_type::*;
+
 use rayon::prelude::*;
 
 const G: f32 = 6.674;
@@ -31,6 +34,8 @@ struct MainState {
     fast_forward: usize,
     step_size: f32,
     charge: f32,
+    input_type: Option<InputVar>,
+    input_buffer: String,
 }
 
 type Point2 = na::Point2<f32>;
@@ -66,6 +71,8 @@ impl MainState {
             fast_forward: 1,
             step_size: 1.0,
             charge: 0.0,
+            input_type: None,
+            input_buffer: String::new(),
         }
     }
 }
@@ -115,6 +122,16 @@ impl event::EventHandler for MainState {
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 0.01));
         if !self.help_menu {
             {
+                let input_display = match self.input_type{
+                    None => "None",
+                    Some(InputVar::Density) => "Density",
+                    Some(InputVar::Radius) => "Radius",
+                    Some(InputVar::PredictSpeed) => "Predict Speed",
+                    Some(InputVar::StepSize) => "Step Size",
+                    Some(InputVar::FastForward) => "Sim Speed",
+                    Some(InputVar::Charge) => "Charge",
+                };
+
                 //top left ui text
                 let info = format!(
                     "
@@ -128,6 +145,7 @@ impl event::EventHandler for MainState {
                     Integrator: {method}
                     Sim Speed: {sim_speed}
                     Step Size: {step_size}
+                    Inputting: {inputtype} - {inbuffer}
                     Press H for keybinds
                     ",
                     x = self.offset.x,
@@ -140,7 +158,9 @@ impl event::EventHandler for MainState {
                     prediction_speed = self.predict_speed,
                     method = format!("{:?}", self.integrator),
                     sim_speed = self.fast_forward,
-                    step_size = self.step_size);
+                    step_size = self.step_size,
+                    inputtype = input_display,
+                    inbuffer = self.input_buffer.chars().skip(1).collect::<String>());
 
                 let text = graphics::Text::new(info);
                 graphics::draw(ctx, &text, graphics::DrawParam::new()).expect("error drawing text");
@@ -345,97 +365,150 @@ impl event::EventHandler for MainState {
         self.offset -= focus;
     }
 
+    fn text_input_event(&mut self, _ctx: &mut Context, character: char){
+        match self.input_type{
+            None => {},
+
+            _ => {
+                if character.is_digit(10) || character == '.'{
+                    self.input_buffer.push(character);
+                }
+            }
+        }
+    }
+
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: input::keyboard::KeyCode, _keymods: input::keyboard::KeyMods, _repeat: bool){
-        self.offset.y += match keycode{
-            input::keyboard::KeyCode::Up => 50.0,
-            input::keyboard::KeyCode::Down => -50.0,
-            _ => 0.0,
-        };
-
-        self.offset.x += match keycode{
-            input::keyboard::KeyCode::Left => 50.0,
-            input::keyboard::KeyCode::Right => -50.0,
-            _ => 0.0,
-        };
-
-        self.density += match keycode{
-            input::keyboard::KeyCode::W => 0.05,
-            input::keyboard::KeyCode::S => -0.05,
-            _ => 0.0,
-        };
-
-        self.radius += match keycode{
-            input::keyboard::KeyCode::Q => 1.0,
-            input::keyboard::KeyCode::A => -1.0,
-            _ => 0.0,
-        };
-
-        self.trail_length = match keycode{
-            input::keyboard::KeyCode::E => self.trail_length + 1,
-            input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
-            _ => self.trail_length,
-        };
-
-        self.predict_speed = match keycode {
-            input::keyboard::KeyCode::X => self.predict_speed + 1,
-            input::keyboard::KeyCode::Z => if self.predict_speed != 0 {self.predict_speed - 1} else {0},
-            _ => self.predict_speed,
-        };
-
-        self.fast_forward = match keycode {
-            input::keyboard::KeyCode::Key1 => if self.fast_forward == 1 {1} else {self.fast_forward - 1},
-            input::keyboard::KeyCode::Key2 => self.fast_forward + 1,
-            _ => self.fast_forward,
-        };
-
-        self.step_size += match keycode {
-            input::keyboard::KeyCode::Key3 => -0.05,
-            input::keyboard::KeyCode::Key4 => 0.05,
-            _ => 0.0,
-        };
-
-        self.charge += match keycode {
-            input::keyboard::KeyCode::V => -0.5,
-            input::keyboard::KeyCode::B => 0.5,
-            _ => 0.0,
-        };
-
-        match keycode{ //misc keys
-            input::keyboard::KeyCode::Space => self.paused = !self.paused,
-
-            input::keyboard::KeyCode::G => self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom)),
-
-            input::keyboard::KeyCode::R => {
-                self.bodies = vec![
-                    Body::new(
-                        Point2::new(500.0, 400.0),
-                        300000.0,
-                        0.0,
-                        100.0,
-                        Vector2::new(0.0, 0.0)),
-                ];
-                self.zoom = 1.0;
-                self.offset = Point2::new(0.0, 0.0);
-                self.fast_forward = 1;
-            }
-
-            input::keyboard::KeyCode::I => {
-                self.integrator = match self.integrator {
-                    Integrator::Euler => Integrator::Verlet,
-                    Integrator::Verlet => Integrator::Euler,
+        match self.input_type{
+            None => { 
+                self.offset.y += match keycode{
+                    input::keyboard::KeyCode::Up => 50.0,
+                    input::keyboard::KeyCode::Down => -50.0,
+                    _ => 0.0,
                 };
-            }
 
-            input::keyboard::KeyCode::H => self.help_menu = !self.help_menu,
+                self.offset.x += match keycode{
+                    input::keyboard::KeyCode::Left => 50.0,
+                    input::keyboard::KeyCode::Right => -50.0,
+                    _ => 0.0,
+                };
 
-            _ => {},
-        };
+                self.density += match keycode{
+                    input::keyboard::KeyCode::W => 0.05,
+                    input::keyboard::KeyCode::S => -0.05,
+                    _ => 0.0,
+                };
+
+                self.radius += match keycode{
+                    input::keyboard::KeyCode::Q => 1.0,
+                    input::keyboard::KeyCode::A => -1.0,
+                    _ => 0.0,
+                };
+
+                self.trail_length = match keycode{
+                    input::keyboard::KeyCode::E => self.trail_length + 1,
+                    input::keyboard::KeyCode::D => if self.trail_length != 0 {self.trail_length - 1} else {0},
+                    _ => self.trail_length,
+                };
+
+                self.predict_speed = match keycode {
+                    input::keyboard::KeyCode::X => self.predict_speed + 1,
+                    input::keyboard::KeyCode::Z => if self.predict_speed != 0 {self.predict_speed - 1} else {0},
+                    _ => self.predict_speed,
+                };
+
+                self.fast_forward = match keycode {
+                    input::keyboard::KeyCode::Key1 => if self.fast_forward == 1 {1} else {self.fast_forward - 1},
+                    input::keyboard::KeyCode::Key2 => self.fast_forward + 1,
+                    _ => self.fast_forward,
+                };
+
+                self.step_size += match keycode {
+                    input::keyboard::KeyCode::Key3 => -0.05,
+                    input::keyboard::KeyCode::Key4 => 0.05,
+                    _ => 0.0,
+                };
+
+                self.charge += match keycode {
+                    input::keyboard::KeyCode::V => -0.5,
+                    input::keyboard::KeyCode::B => 0.5,
+                    _ => 0.0,
+                };
+
+                match keycode{ //misc keys
+                    input::keyboard::KeyCode::Space => self.paused = !self.paused,
+
+                    input::keyboard::KeyCode::G => self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom)),
+
+                    input::keyboard::KeyCode::R => {
+                        self.bodies = vec![
+                            Body::new(
+                                Point2::new(500.0, 400.0),
+                                300000.0,
+                                0.0,
+                                100.0,
+                                Vector2::new(0.0, 0.0)),
+                        ];
+                        self.zoom = 1.0;
+                        self.offset = Point2::new(0.0, 0.0);
+                        self.fast_forward = 1;
+                    }
+
+                    input::keyboard::KeyCode::I => {
+                        self.integrator = match self.integrator {
+                            Integrator::Euler => Integrator::Verlet,
+                            Integrator::Verlet => Integrator::Euler,
+                        };
+                    }
+
+                    input::keyboard::KeyCode::H => self.help_menu = !self.help_menu,
+
+                    input::keyboard::KeyCode::Key0 => self.input_type = Some(InputVar::Density),
+
+                    input::keyboard::KeyCode::Key9 => self.input_type = Some(InputVar::Radius),
+
+                    input::keyboard::KeyCode::Key8 => self.input_type = Some(InputVar::PredictSpeed),
+                    
+                    input::keyboard::KeyCode::Key7 => self.input_type = Some(InputVar::FastForward),
+                    
+                    input::keyboard::KeyCode::Key6 => self.input_type = Some(InputVar::StepSize),
+                    
+                    input::keyboard::KeyCode::Key5 => self.input_type = Some(InputVar::Charge),
+
+                    _ => {},
+                };
+            },
+
+            _ => {
+                if keycode == input::keyboard::KeyCode::Return {
+                    self.input_buffer = self.input_buffer.chars().skip(1).collect();
+
+                    match self.input_buffer.parse::<f32>(){
+                        Err(e) => {},
+                        Ok(num) => {
+                            match self.input_type{
+                                Some(InputVar::Density) => self.density = num,
+                                Some(InputVar::Radius) => self.radius = num,
+                                Some(InputVar::PredictSpeed) => self.predict_speed = num as usize,
+                                Some(InputVar::FastForward) => self.fast_forward = num as usize,
+                                Some(InputVar::StepSize) => self.step_size = num,
+                                Some(InputVar::Charge) => self.charge = num,
+                                _ => {},
+                            }
+                        }
+                    };
+
+                    self.input_type = None;
+                    self.input_buffer = String::new();
+                }
+            },
+        }
 
         if self.radius < 1.0 {self.radius = 1.0};
         self.radius = (self.radius * 1000.0).round()/1000.0;
         self.density = (self.density * 1000.0).round()/1000.0;
         self.step_size = (self.step_size * 1000.0).round()/1000.0;
     }
+
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, _x: f32, _y: f32, dx: f32, dy: f32){
 
