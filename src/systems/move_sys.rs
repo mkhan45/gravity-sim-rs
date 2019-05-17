@@ -13,7 +13,7 @@ impl<'a> System<'a> for MoveSys{
         for (pos, vel) in (&mut pos, &vel).join(){
             pos.x += vel.x;
             pos.y += vel.y;
-            println!("{:?}", pos);
+            // println!("{:?}", pos);
         }
     }
 }

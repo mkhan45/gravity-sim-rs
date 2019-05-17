@@ -26,14 +26,19 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn update(&mut self, ctx: &mut Context) -> GameResult{
         self.world.maintain();
         self.dispatcher.dispatch(&mut self.world.res);
+
+        if ggez::timer::ticks(ctx) % 60 == 0{
+            println!("FPS: {}", ggez::timer::fps(ctx));
+        }
+
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult{
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
 
-	let positions = self.world.read_storage::<Pos>();
-	let radii = self.world.read_storage::<Radius>();
+        let positions = self.world.read_storage::<Pos>();
+        let radii = self.world.read_storage::<Radius>();
 
         for (position, radius) in (&positions, &radii).join(){
             let outline = graphics::Mesh::new_circle( //draw outline
