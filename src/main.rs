@@ -1,13 +1,5 @@
-extern crate quicksilver;
-use quicksilver::{
-    Result,
-    geom::{Vector, Shape},
-    graphics::{Background, Color, Drawable, Font, FontStyle, Background::Img, Image},
-    lifecycle::{Settings, State, Window, run, Event, Asset},
-    input::{MouseButton, Key, ButtonState}
-};
-
-use std::{thread, time};
+extern crate ggez;
+use ggez::{event, GameResult};
 
 extern crate specs;
 use specs::prelude::*;
@@ -18,9 +10,12 @@ mod components;
 use systems::*;
 use components::*;
 
-fn main() {
-    let mut world = World::new();
 
+mod main_state;
+use main_state::MainState;
+
+fn main() -> GameResult {
+    let mut world = World::new();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(MoveSys, "move_system", &[])
@@ -29,22 +24,28 @@ fn main() {
 
     dispatcher.setup(&mut world.res);
 
+    world.register::<Radius>();
 
     world.create_entity()
         .with(Vel{x: 0.0, y: 0.0})
-        .with(Pos{x: 0.0, y: 0.0})
+        .with(Pos{x: 0.0, y: 30.0})
         .with(Mass(5.0))
+        .with(Radius(15.0))
         .build();
 
     world.create_entity()
         .with(Vel{x: 0.0, y: 0.0})
-        .with(Pos{x: 100.0, y: 0.0})
+        .with(Pos{x: 400.0, y: 400.0})
         .with(Mass(5.0))
+        .with(Radius(15.0))
         .build();
 
-    loop{
-        dispatcher.dispatch(&mut world.res);
-        world.maintain();
-        thread::sleep(time::Duration::from_millis((1000.0/60.0) as u64));
-    }
+    let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Fish")
+        .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 800.0))
+        .build().expect("error building context");
+
+    let main_state = &mut MainState::new(world, dispatcher);
+
+    event::run(ctx, event_loop, main_state)
 }

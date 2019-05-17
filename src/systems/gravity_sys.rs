@@ -2,6 +2,8 @@ use specs::prelude::*;
 
 use crate::components::*;
 
+const MULTIPLIER: f32 = 25.0;
+
 pub struct GraviSys;
 
 impl<'a> System<'a> for GraviSys{
@@ -12,11 +14,11 @@ impl<'a> System<'a> for GraviSys{
             for (other_pos, other_mass) in (&pos, &mass).join(){
                 let distance = distance(current_pos, other_pos);
 
-                if distance >= 1.0{
+                if distance > 0.0001{
                     let x_comp = other_pos.x - current_pos.x;
                     let y_comp = other_pos.y - current_pos.y;
 
-                    let magnitude = ((current_mass.0 * other_mass.0) / distance.powi(2))/10.0;
+                    let magnitude = ((current_mass.0 * other_mass.0) / distance.powi(2)) * MULTIPLIER;
                     let x_mag = x_comp/distance * magnitude;
                     let y_mag = y_comp/distance * magnitude;
 
