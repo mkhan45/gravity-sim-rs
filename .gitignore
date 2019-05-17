@@ -1,2 +1,7 @@
 /target
 **/*.rs.bk
+/UltiSnips/
+/LICENSE
+/nbodyrs.wasm
+/*.gif
+
