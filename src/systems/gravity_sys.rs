@@ -35,10 +35,3 @@ impl<'a> System<'a> for GraviSys{
 fn distance(a: &Pos, b: &Pos) -> f32{
     ((a.x - b.x).powi(2) + (a.y - b.y).powi(2)).sqrt()
 }
-
-fn angle(a: &Pos, b: &Pos) -> f32{
-    let restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan(); //.atan() returns from -pi/2 to +pi/2
-
-    if b.x >= a.x {restricted_dom + PI}
-    else {restricted_dom}
-}
