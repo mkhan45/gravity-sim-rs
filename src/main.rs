@@ -12,6 +12,12 @@ use std::{thread, time};
 extern crate specs;
 use specs::prelude::*;
 
+mod systems;
+mod components;
+
+use systems::*;
+use components::*;
+
 fn main() {
     let mut world = World::new();
 
@@ -43,43 +49,11 @@ fn main() {
     }
 }
 
-#[derive(Debug)]
-struct Pos{
-    x: f32,
-    y: f32,
-}
-
-impl Component for Pos{
-    type Storage = DenseVecStorage<Self>;
-}
-
-struct Vel{
-    x: f32,
-    y: f32,
-}
-
-impl Component for Vel{
-    type Storage = DenseVecStorage<Self>;
-}
 
 struct Mass(f32);
 
 impl Component for Mass{
     type Storage = DenseVecStorage<Self>;
-}
-
-struct MoveSys;
-
-impl<'a> System<'a> for MoveSys{
-    type SystemData = (WriteStorage<'a, Pos>, ReadStorage<'a, Vel>);
-
-    fn run(&mut self, (mut pos, vel): Self::SystemData){
-        for (pos, vel) in (&mut pos, &vel).join(){
-            pos.x += vel.x;
-            pos.y += vel.y;
-            println!("{:?}", pos);
-        }
-    }
 }
 
 struct GraviSys;
