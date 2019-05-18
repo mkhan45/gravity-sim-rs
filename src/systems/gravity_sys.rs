@@ -12,7 +12,7 @@ impl<'a> System<'a> for GraviSys{
     type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Vel>, ReadStorage<'a, Mass>);
 
     fn run(&mut self, (pos, mut vel, mass): Self::SystemData){
-        for (current_pos, current_vel) in (&pos, &mut vel).join(){
+        (&pos, &mut vel).par_join().for_each(|(current_pos, current_vel)|{
             for (other_pos, other_mass) in (&pos, &mass).join(){
                 let distance = distance(current_pos, other_pos);
 
@@ -28,7 +28,7 @@ impl<'a> System<'a> for GraviSys{
                     current_vel.y += y_mag;
                 }
             }
-        }
+        });
     }
 }
 

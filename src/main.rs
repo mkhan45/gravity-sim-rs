@@ -44,7 +44,7 @@ fn main() -> GameResult {
     for i in 0..1000{
         world.create_entity()
             .with(Vel{x: 0.0, y: 0.0})
-            .with(Pos{x: i as f32 * 100.0, y: 400.0})
+            .with(Pos{x: i as f32 * 100.0, y: i as f32 * 100.0})
             .with(Mass(-1.0))
             .with(Radius(15.0))
             .build();
