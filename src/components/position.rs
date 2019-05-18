@@ -32,3 +32,9 @@ impl Movement{
 impl Component for Movement{
     type Storage = DenseVecStorage<Self>;
 }
+
+pub struct Opacity(f32);
+
+impl Component for Opacity{
+    type Storage = VecStorage<Self>;
+}

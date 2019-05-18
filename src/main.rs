@@ -26,6 +26,7 @@ fn main() -> GameResult {
     dispatcher.setup(&mut world.res);
 
     world.register::<Radius>();
+    world.register::<Opacity>();
 
     world.create_entity()
         .with(Movement::new(0.0, 0.0))

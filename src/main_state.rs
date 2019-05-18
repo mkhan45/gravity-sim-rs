@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
 use ggez::{
-    nalgebra as na, input, GameResult, Context, graphics,
+    input, GameResult, Context, graphics,
     input::{
         mouse::MouseButton, 
         keyboard::{KeyCode, KeyMods},
@@ -21,6 +21,7 @@ pub struct MainState<'a, 'b>{
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     start_point: Point,
+    radius: f32,
 }
 
 impl<'a, 'b> MainState<'a, 'b>{
@@ -29,6 +30,7 @@ impl<'a, 'b> MainState<'a, 'b>{
             world,
             dispatcher,
             start_point: Point::from_slice(&[0.0, 0.0]),
+            radius: 15.0,
         }
     }
 }
@@ -67,18 +69,38 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn draw(&mut self, ctx: &mut Context) -> GameResult{
         graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
 
+        {
+            let screen_coords = graphics::screen_coordinates(ctx);
+            let scale = screen_coords.w/1000.0;
+
+            let info = format!(
+                "Offset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nPress H for keybinds",
+
+                x = screen_coords.x,
+                y = screen_coords.y, 
+                zoom = scale,
+                radius = self.radius
+            );
+
+            let text = graphics::Text::new(info);
+            let params = graphics::DrawParam::new()
+                .scale([scale, scale])
+                .dest([screen_coords.x, screen_coords.y]);
+            graphics::draw(ctx, &text, params).expect("error drawing text");
+        }
+
         let positions = self.world.read_storage::<Pos>();
         let radii = self.world.read_storage::<Radius>();
 
         for (position, radius) in (&positions, &radii).join(){
-            let outline = graphics::Mesh::new_circle( //draw outline
+            let outline = graphics::Mesh::new_circle( //draw bodies
                 ctx,
                 graphics::DrawMode::fill(),
                 [position.x, position.y],
                 radius.0,
                 0.25,
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0))
-                .expect("error building outline");
+                .expect("error building body mesh");
 
             graphics::draw(ctx, &outline, DrawParam::new()).expect("error drawing outline");
         }
@@ -91,17 +113,32 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
         mouse_pos = Point::from_slice(&[scaled_x, scaled_y]);
 
-        if mouse_pos != self.start_point && input::mouse::button_pressed(ctx, MouseButton::Left){ //draw preview vector
+        let mouse_pressed = input::mouse::button_pressed(ctx, MouseButton::Left);
 
-            let line = graphics::Mesh::new_line(
-                ctx,
-                &[self.start_point, mouse_pos][..],
-                0.25 * 10.0,
-                graphics::Color::new(1.0, 1.0, 1.0, 0.8))
-                .expect("error building preview line mesh");
+        if mouse_pressed{
+            if mouse_pos != self.start_point{ //draw preview vector
 
-            graphics::draw(ctx, &line, DrawParam::new()).expect("error drawing preview line");
+                let line = graphics::Mesh::new_line(
+                    ctx,
+                    &[self.start_point, mouse_pos][..],
+                    0.25 * 10.0,
+                    graphics::Color::new(1.0, 1.0, 1.0, 0.8))
+                    .expect("error building preview line mesh");
+
+                graphics::draw(ctx, &line, DrawParam::new()).expect("error drawing preview line");
+            }
         }
+
+        let preview_outline = graphics::Mesh::new_circle(
+            ctx,
+            graphics::DrawMode::fill(),
+            if mouse_pressed {[self.start_point.x, self.start_point.y]} else {[mouse_pos.x, mouse_pos.y]},
+            self.radius,
+            0.25,
+            graphics::Color::new(1.0, 1.0, 1.0, 0.5))
+            .expect("error building preview outline");
+
+        graphics::draw(ctx, &preview_outline, DrawParam::new()).expect("error drawing outline");
 
         graphics::present(ctx).expect("error rendering");
         Ok(())
@@ -118,9 +155,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 let vector_y = (scaled_y - self.start_point.y) * 0.1; 
 
                 self.world.create_entity()
-                    .with(Pos{x: scaled_x, y: scaled_y})
+                    .with(Pos{x: self.start_point.x, y: self.start_point.y})
                     .with(Movement::new(vector_x, vector_y))
-                    .with(Radius(15.0))
+                    .with(Radius(self.radius))
                     .with(Mass(5.0))
                     .build();
             },
@@ -166,7 +203,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         match keycode{
             KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &15.0, &0.001, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
             _ => {},
-        }
+        };
+
+        self.radius += match keycode{
+            KeyCode::Q => 1.0,
+            KeyCode::A => -1.0,
+            _ => 0.0,
+        };
     }
 }
 
