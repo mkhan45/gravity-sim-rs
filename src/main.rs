@@ -27,19 +27,19 @@ fn main() -> GameResult {
 
     world.register::<Radius>();
 
-    // world.create_entity()
-    //     .with(Vel{x: 0.0, y: 0.0})
-    //     .with(Pos{x: 0.0, y: 30.0})
-    //     .with(Mass(1.0))
-    //     .with(Radius(15.0))
-    //     .build();
+    world.create_entity()
+        .with(Movement::new(0.0, 0.0))
+        .with(Pos{x: 500.0, y: 400.0})
+        .with(Mass(250.0))
+        .with(Radius(25.0))
+        .build();
 
-    // world.create_entity()
-    //     .with(Vel{x: 0.0, y: 0.0})
-    //     .with(Pos{x: 200.0, y: 100.0})
-    //     .with(Mass(1.0))
-    //     .with(Radius(15.0))
-    //     .build();
+    world.create_entity()
+        .with(Movement::new(0.0, -5.0))
+        .with(Pos{x: 900.0, y: 400.0})
+        .with(Mass(0.5))
+        .with(Radius(15.0))
+        .build();
 
     // for i in 0..1000{
     //     world.create_entity()

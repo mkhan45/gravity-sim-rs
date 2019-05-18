@@ -15,9 +15,12 @@ use crate::components::*;
 
 use std::f32::consts::PI;
 
+type Point = Point2<f32>;
+
 pub struct MainState<'a, 'b>{
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
+    start_point: Point,
 }
 
 impl<'a, 'b> MainState<'a, 'b>{
@@ -25,6 +28,7 @@ impl<'a, 'b> MainState<'a, 'b>{
         MainState{
             world,
             dispatcher,
+            start_point: Point::from_slice(&[0.0, 0.0]),
         }
     }
 }
@@ -38,8 +42,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             println!("FPS: {}", ggez::timer::fps(ctx));
         }
 
-        if input::mouse::button_pressed(ctx, MouseButton::Left){
-        }
 
         {
             let mut screen = graphics::screen_coordinates(ctx);
@@ -81,19 +83,60 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             graphics::draw(ctx, &outline, DrawParam::new()).expect("error drawing outline");
         }
 
+        let mut mouse_pos = input::mouse::position(ctx);
+
+        let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+        let scaled_x = mouse_pos.x * scale + graphics::screen_coordinates(ctx).x;
+        let scaled_y = mouse_pos.y * scale + graphics::screen_coordinates(ctx).y;
+
+        mouse_pos = Point::from_slice(&[scaled_x, scaled_y]);
+
+        if mouse_pos != self.start_point && input::mouse::button_pressed(ctx, MouseButton::Left){ //draw preview vector
+
+            let line = graphics::Mesh::new_line(
+                ctx,
+                &[self.start_point, mouse_pos][..],
+                0.25 * 10.0,
+                graphics::Color::new(1.0, 1.0, 1.0, 0.8))
+                .expect("error building preview line mesh");
+
+            graphics::draw(ctx, &line, DrawParam::new()).expect("error drawing preview line");
+        }
+
         graphics::present(ctx).expect("error rendering");
         Ok(())
     }
 
-    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, x: f32, y: f32){
+    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32){
         match button{
             MouseButton::Left => {
+                let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+                let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
+                let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
+
+                let vector_x = (scaled_x - self.start_point.x) * 0.1; 
+                let vector_y = (scaled_y - self.start_point.y) * 0.1; 
+
                 self.world.create_entity()
-                    .with(Pos{x, y})
-                    .with(Movement::new(0.0, 0.0))
+                    .with(Pos{x: scaled_x, y: scaled_y})
+                    .with(Movement::new(vector_x, vector_y))
                     .with(Radius(15.0))
                     .with(Mass(5.0))
                     .build();
+            },
+
+            _ => {},
+        }
+    }
+
+    fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32){
+        match button{
+            MouseButton::Left => {
+                let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+                let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
+                let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
+
+                self.start_point = Point::from_slice(&[scaled_x, scaled_y]);
             },
 
             _ => {},
