@@ -98,7 +98,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 graphics::DrawMode::fill(),
                 [position.x, position.y],
                 radius.0,
-                0.25,
+                0.1,
                 graphics::Color::new(1.0, 1.0, 1.0, 1.0))
                 .expect("error building body mesh");
 
@@ -134,7 +134,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             graphics::DrawMode::fill(),
             if mouse_pressed {[self.start_point.x, self.start_point.y]} else {[mouse_pos.x, mouse_pos.y]},
             self.radius,
-            0.25,
+            0.1,
             graphics::Color::new(1.0, 1.0, 1.0, 0.5))
             .expect("error building preview outline");
 
@@ -188,13 +188,19 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         screen.scale(1.0 + (y * -0.08), 1.0 + (y * -0.08));
 
         let delta_zoom = (screen.w/1000.0 - prev_zoom) * -1.0;
-        println!("{}", delta_zoom);
 
-        if delta_zoom < 0.0{
-            screen.translate([(screen.point().x - input::mouse::position(ctx).x) * delta_zoom, (screen.point().y - input::mouse::position(ctx).y) * delta_zoom]);
-        }else{
-            screen.translate([(screen.point().x + input::mouse::position(ctx).x) * delta_zoom, (screen.point().y + input::mouse::position(ctx).y) * delta_zoom]);
-        }
+        let mut mouse_pos = input::mouse::position(ctx);
+        
+        let scale = screen.w / 1000.0;
+
+        mouse_pos.x = (mouse_pos.x * scale) + screen.x;
+        mouse_pos.y = (mouse_pos.y * scale) + screen.y;
+
+        let mut focus = [mouse_pos.x, mouse_pos.y];
+        focus[0] *= delta_zoom;
+        focus[1] *= delta_zoom;
+
+        screen.translate(focus);
 
         graphics::set_screen_coordinates(ctx, screen).expect("error scaling screen");
     }

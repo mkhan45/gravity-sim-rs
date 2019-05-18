@@ -1,5 +1,5 @@
 [package]
-name = "pongecs"
+name = "nbodyrs"
 version = "0.2.0"
 authors = ["Mikail Khan <mikail.khan45@gmail.com>"]
 edition = "2018"

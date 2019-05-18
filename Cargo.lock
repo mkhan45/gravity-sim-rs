@@ -1165,6 +1165,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "nbodyrs"
+version = "0.2.0"
+dependencies = [
+ "ggez 0.5.0-rc.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs 0.14.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "nix"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1388,14 +1396,6 @@ dependencies = [
 name = "podio"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "pongecs"
-version = "0.2.0"
-dependencies = [
- "ggez 0.5.0-rc.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "specs 0.14.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "proc-macro2"
