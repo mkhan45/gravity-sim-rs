@@ -90,7 +90,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             MouseButton::Left => {
                 self.world.create_entity()
                     .with(Pos{x, y})
-                    .with(Vel{x: 0.0, y: 0.0})
+                    .with(Movement::new(0.0, 0.0))
                     .with(Radius(15.0))
                     .with(Mass(5.0))
                     .build();
@@ -136,7 +136,7 @@ fn grid(start: &Point2<f32>, radius: &f32, density: &f32, zoom: &f32, world: &mu
 
             world.create_entity()
                 .with(Pos{x: point.0, y: point.1})
-                .with(Vel{x: 0.0, y: 0.0})
+                .with(Movement::new(0.0, 0.0))
                 .with(Mass(mass))
                 .with(Radius(*radius))
                 .build();

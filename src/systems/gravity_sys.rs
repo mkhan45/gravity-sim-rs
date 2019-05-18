@@ -9,10 +9,11 @@ const MULTIPLIER: f32 = 50.0;
 pub struct GraviSys;
 
 impl<'a> System<'a> for GraviSys{
-    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Vel>, ReadStorage<'a, Mass>);
+    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>);
 
-    fn run(&mut self, (pos, mut vel, mass): Self::SystemData){
-        (&pos, &mut vel).par_join().for_each(|(current_pos, current_vel)|{
+    fn run(&mut self, (pos, mut movement, mass): Self::SystemData){
+        (&pos, &mut movement).par_join().for_each(|(current_pos, current_movement)|{
+            current_movement.accel = (0.0, 0.0);
             for (other_pos, other_mass) in (&pos, &mass).join(){
                 let distance = distance(current_pos, other_pos);
 
@@ -24,8 +25,8 @@ impl<'a> System<'a> for GraviSys{
                     let x_mag = x_comp/distance * magnitude;
                     let y_mag = y_comp/distance * magnitude;
 
-                    current_vel.x += x_mag;
-                    current_vel.y += y_mag;
+                    current_movement.accel.0 += x_mag;
+                    current_movement.accel.1 += y_mag;
                 }
             }
         });

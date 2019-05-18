@@ -10,22 +10,25 @@ use std::collections::HashSet;
 pub struct CollisionSys;
 
 impl<'a> System<'a> for CollisionSys{
-    type SystemData = (Entities<'a>, WriteStorage<'a, Pos>, WriteStorage<'a, Radius>, WriteStorage<'a, Mass>, WriteStorage<'a, Vel>);
+    type SystemData = (Entities<'a>, WriteStorage<'a, Pos>, WriteStorage<'a, Radius>, WriteStorage<'a, Mass>, WriteStorage<'a, Movement>);
 
-    fn run(&mut self, (entities, mut positions, mut radii, mut masses, mut velocities): Self::SystemData){
-        let mut new_bodies: Vec<(Pos, Radius, Mass, Vel)> = Vec::new();
+    fn run(&mut self, (entities, mut positions, mut radii, mut masses, mut movements): Self::SystemData){
+        let mut new_bodies: Vec<(Pos, Radius, Mass, Movement)> = Vec::new();
         let mut collided: Vec<&Pos> = Vec::new();
 
-        for (entity, pos, radius, mass, vel) in (&entities, &positions, &radii, &masses, &velocities).join(){
-            for (other_entity, other_pos, other_rad, other_mass, other_vel) in (&entities, &positions, &radii, &masses, &velocities).join(){
+        for (entity, pos, radius, mass, movement) in (&entities, &positions, &radii, &masses, &movements).join(){
+            for (other_entity, other_pos, other_rad, other_mass, other_movements) in (&entities, &positions, &radii, &masses, &movements).join(){
                 let distance = distance(&pos, &other_pos);
+                let vel = movement.vel;
 
                 if distance <= radius.0 + other_rad.0 && entity != other_entity{
                     entities.delete(entity).expect("no entity");
 
+                    let other_vel = other_movements.vel;
+
                     if !collided.contains(&other_pos){
-                        let momentum_1 = (mass.0 * vel.x, mass.0 * vel.y);
-                        let momentum_2 = (other_mass.0 * other_vel.x, other_mass.0 * other_vel.y);
+                        let momentum_1 = (mass.0 * vel.0, mass.0 * vel.1);
+                        let momentum_2 = (other_mass.0 * other_vel.0, other_mass.0 * other_vel.1);
 
                         let total_momentum = (momentum_1.0 + momentum_2.0, momentum_1.1 + momentum_2.1);
 
@@ -41,7 +44,7 @@ impl<'a> System<'a> for CollisionSys{
                                 if radius.0 > other_rad.0 {Pos{x: pos.x, y: pos.y}} else {Pos{x: other_pos.x, y: other_pos.y}},
                                 Radius(new_rad),
                                 Mass(total_mass),
-                                Vel{x: total_momentum.0/total_mass, y: total_momentum.1/total_mass}));
+                                Movement::new(total_momentum.0/total_mass, total_momentum.1/total_mass)));
 
                         collided.push(pos);
                     }
@@ -54,7 +57,7 @@ impl<'a> System<'a> for CollisionSys{
                     .with(body.0.clone(), &mut positions)
                     .with(body.1.clone(), &mut radii)
                     .with(body.2.clone(), &mut masses)
-                    .with(body.3.clone(), &mut velocities)
+                    .with(body.3.clone(), &mut movements)
                     .build();
             });
     }
