@@ -10,10 +10,9 @@ impl<'a> System<'a> for MoveSys{
     type SystemData = (WriteStorage<'a, Pos>, ReadStorage<'a, Vel>);
 
     fn run(&mut self, (mut pos, vel): Self::SystemData){
-        for (pos, vel) in (&mut pos, &vel).join(){
+        (&mut pos, &vel).par_join().for_each(|(pos, vel)|{
             pos.x += vel.x;
             pos.y += vel.y;
-            // println!("{:?}", pos);
-        }
+        });
     }
 }
