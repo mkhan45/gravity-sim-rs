@@ -9,12 +9,12 @@ const MULTIPLIER: f32 = 50.0;
 pub struct GraviSys;
 
 impl<'a> System<'a> for GraviSys{
-    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>);
+    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, ReadStorage<'a, PreviewFlag>);
 
-    fn run(&mut self, (pos, mut movement, mass): Self::SystemData){
+    fn run(&mut self, (pos, mut movement, mass, flags): Self::SystemData){
         (&pos, &mut movement).par_join().for_each(|(current_pos, current_movement)|{
             current_movement.accel = (0.0, 0.0);
-            for (other_pos, other_mass) in (&pos, &mass).join(){
+            for (other_pos, other_mass, ()) in (&pos, &mass, !&flags).join(){
                 let distance = distance(current_pos, other_pos);
 
                 if  distance != 0.0{ //also makes sure not the same body

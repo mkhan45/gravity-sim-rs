@@ -26,7 +26,9 @@ fn main() -> GameResult {
 
     dispatcher.setup(&mut world.res);
 
+
     world.register::<Opacity>();
+    world.register::<PreviewFlag>();
 
     world.create_entity()
         .with(Movement::new(0.0, 0.0))
@@ -40,15 +42,15 @@ fn main() -> GameResult {
         .with(Movement::new(0.0, -5.0))
         .with(Pos{x: 1200.0, y: 400.0})
         .with(Mass(0.1))
-        .with(Radius(15.0))
+        .with(Radius(10.0))
         .with(Trail::new(30))
         .build();
 
-    // for i in 0..1000{
+    // for i in 0..1100{
     //     world.create_entity()
-    //         .with(Vel{x: 0.0, y: 0.0})
+    //         .with(Movement::new(0.0, 0.0))
     //         .with(Pos{x: i as f32 * 100.0, y: i as f32 * 100.0})
-    //         .with(Mass(1.0))
+    //         .with(Mass(-1.0))
     //         .with(Radius(15.0))
     //         .build();
     // }

@@ -27,14 +27,18 @@ impl<'a> System<'a> for MoveSys{
 pub struct TrailSys;
 
 impl <'a> System<'a> for TrailSys{
-    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Trail>);
+    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Trail>, Entities<'a>, ReadStorage<'a, PreviewFlag>);
 
-    fn run(&mut self, (pos, mut trails): Self::SystemData){
-        (&pos, &mut trails).par_join().for_each(|(pos, trail)|{
+    fn run(&mut self, (pos, mut trails, entities, preview_flags): Self::SystemData){
+        (&pos, &mut trails, &entities).par_join().for_each(|(pos, trail, ent)|{
             trail.points.push(Point::from_slice(&[pos.x, pos.y]));
 
+            let preview_flag = preview_flags.get(ent);
+
             if trail.points.len() > trail.length as usize{
-                trail.points.remove(0);
+                if let None = preview_flag{
+                    trail.points.remove(0);
+                }
             }
         });
     }

@@ -92,30 +92,47 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         let positions = self.world.read_storage::<Pos>();
         let radii = self.world.read_storage::<Radius>();
         let trails = self.world.read_storage::<Trail>();
+        let flags = self.world.read_storage::<PreviewFlag>();
+        let entities = self.world.entities();
 
-        for (trail, radius) in (&trails, &radii).join(){
+        for (trail, radius, entity) in (&trails, &radii, &entities).join(){
             if trail.points.len() > 2{
+                let flag = flags.get(entity);
+                let color = match flag{
+                    Some(_flag) => graphics::Color::new(0.2, 1.0, 0.5, 0.35),
+                    None => graphics::Color::new(0.1, 0.25, 1.0, 0.5),
+                };
+
                 let result = graphics::Mesh::new_line(
                     ctx,
                     &trail.points.as_slice(),
                     0.2 * radius.0,
-                    graphics::Color::new(0.1, 0.25, 1.0, 0.5));
+                    color);
 
                 match result{
                     Ok(line_mesh) => graphics::draw(ctx, &line_mesh, DrawParam::new()).expect("error drawing outline"),
-                    Err(e) => println!("{}", e),
+                    Err(e) => {},
                 }
             }
         }
 
-        for (position, radius) in (&positions, &radii).join(){
+
+        for (position, radius, entity) in (&positions, &radii, &entities).join(){
+            let flag = flags.get(entity);
+
+            let color = match flag{
+                Some(_flag) => graphics::Color::new(0.2, 1.0, 0.5, 0.5),
+                None => graphics::Color::new(1.0, 1.0, 1.0, 1.0),
+            };
+            
+
             let outline = graphics::Mesh::new_circle( //draw bodies
                 ctx,
                 graphics::DrawMode::fill(),
                 [position.x, position.y],
                 radius.0,
                 0.1,
-                graphics::Color::new(1.0, 1.0, 1.0, 1.0))
+                color)
                 .expect("error building body mesh");
 
             graphics::draw(ctx, &outline, DrawParam::new()).expect("error drawing outline");
@@ -175,8 +192,16 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                     .with(Pos{x: self.start_point.x, y: self.start_point.y})
                     .with(Movement::new(vector_x, vector_y))
                     .with(Radius(self.radius))
-                    .with(Mass(5.0))
+                    .with(Mass(0.1))
+                    .with(Trail::new(30))
                     .build();
+
+                let entities = self.world.entities();
+                let flags = self.world.read_storage::<PreviewFlag>();
+
+                for (entity, _flag) in (&entities, &flags).join(){
+                    entities.delete(entity).expect("error deleting preview");
+                }
             },
 
             _ => {},
@@ -187,6 +212,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         match button{
             MouseButton::Left => {
                 let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+
                 let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
                 let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
 
@@ -194,6 +220,36 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             },
 
             _ => {},
+        }
+    }
+
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32){
+        if input::mouse::button_pressed(ctx, MouseButton::Left){
+            let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+            let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
+            let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
+
+            let vector_x = (scaled_x - self.start_point.x) * 0.1; 
+            let vector_y = (scaled_y - self.start_point.y) * 0.1; 
+
+            let mut positions = self.world.write_storage::<Pos>();
+            let mut movements = self.world.write_storage::<Movement>();
+            let mut radii = self.world.write_storage::<Radius>();
+            let mut flags = self.world.write_storage::<PreviewFlag>();
+            let mut trails = self.world.write_storage::<Trail>();
+            let entities = self.world.entities();
+
+            for (entity, _flag) in (&entities, &flags).join(){
+                // entities.delete(entity).expect("error deleting preview");
+            }
+
+            self.world.entities().build_entity()
+                .with(Pos{x: self.start_point.x, y: self.start_point.y}, &mut positions)
+                .with(Movement::new(vector_x, vector_y), &mut movements)
+                .with(Radius(self.radius), &mut radii)
+                .with(PreviewFlag, &mut flags)
+                .with(Trail::new(1), &mut trails)
+                .build();
         }
     }
 
@@ -224,7 +280,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool){
         match keycode{
-            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &15.0, &0.001, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
+            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &0.001, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
             _ => {},
         };
 

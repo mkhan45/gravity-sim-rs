@@ -7,7 +7,7 @@ pub struct Pos{
 }
 
 impl Component for Pos{
-    type Storage = DenseVecStorage<Self>;
+    type Storage = VecStorage<Self>;
 }
 
 impl Eq for Pos{}
@@ -30,11 +30,11 @@ impl Movement{
 }
 
 impl Component for Movement{
-    type Storage = DenseVecStorage<Self>;
+    type Storage = VecStorage<Self>;
 }
 
 pub struct Opacity(f32);
 
 impl Component for Opacity{
-    type Storage = VecStorage<Self>;
+    type Storage = HashMapStorage<Self>;
 }

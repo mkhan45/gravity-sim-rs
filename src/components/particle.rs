@@ -4,8 +4,6 @@ use ggez::mint::Point2;
 
 type Point = Point2<f32>;
 
-use std::collections::VecDeque;
-
 #[derive(Clone)]
 pub struct Mass(pub f32);
 
@@ -43,4 +41,11 @@ impl Trail{
 
 impl Component for Trail{
     type Storage = DenseVecStorage<Self>;
+}
+
+#[derive(Default)]
+pub struct PreviewFlag;
+
+impl Component for PreviewFlag{
+    type Storage = NullStorage<Self>;
 }

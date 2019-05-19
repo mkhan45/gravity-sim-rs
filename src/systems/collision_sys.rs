@@ -10,9 +10,10 @@ use std::collections::HashSet;
 pub struct CollisionSys;
 
 impl<'a> System<'a> for CollisionSys{
-    type SystemData = (Entities<'a>, WriteStorage<'a, Pos>, WriteStorage<'a, Radius>, WriteStorage<'a, Mass>, WriteStorage<'a, Movement>);
+    type SystemData = (Entities<'a>, WriteStorage<'a, Pos>, WriteStorage<'a, Radius>, 
+                       WriteStorage<'a, Mass>, WriteStorage<'a, Movement>, ReadStorage<'a, PreviewFlag>);
 
-    fn run(&mut self, (entities, mut positions, mut radii, mut masses, mut movements): Self::SystemData){
+    fn run(&mut self, (entities, mut positions, mut radii, mut masses, mut movements, flags): Self::SystemData){
         let mut new_bodies: Vec<(Pos, Radius, Mass, Movement)> = Vec::new();
         let mut collided: Vec<&Pos> = Vec::new();
 
@@ -51,6 +52,19 @@ impl<'a> System<'a> for CollisionSys{
                 }
             }
         }
+
+        (&positions, &radii, &entities, &flags).join()
+            .for_each(|(position, radius, entity, flag)|{
+                (&positions, &radii, !&flags).par_join()
+                    .for_each(|(other_pos, other_rad, ())|{
+                        let distance = distance(&position, &other_pos);
+
+                        if distance < radius.0 + other_rad.0{
+                            entities.delete(entity).expect("error deleting collided preview");
+                        }
+                    });
+            });
+
         new_bodies.iter()
             .for_each(|body|{
                 entities.build_entity()
