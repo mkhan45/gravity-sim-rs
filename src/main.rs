@@ -21,25 +21,27 @@ fn main() -> GameResult {
         .with(MoveSys, "move_system", &[])
         .with(GraviSys, "gravity_system", &[])
         .with(CollisionSys, "collision_system", &[])
+        .with(TrailSys, "trail_system", &[])
         .build();
 
     dispatcher.setup(&mut world.res);
 
-    world.register::<Radius>();
     world.register::<Opacity>();
 
     world.create_entity()
         .with(Movement::new(0.0, 0.0))
         .with(Pos{x: 500.0, y: 400.0})
-        .with(Mass(250.0))
+        .with(Mass(450.0))
         .with(Radius(25.0))
+        .with(Trail::new(30))
         .build();
 
     world.create_entity()
         .with(Movement::new(0.0, -5.0))
-        .with(Pos{x: 900.0, y: 400.0})
-        .with(Mass(0.5))
+        .with(Pos{x: 1200.0, y: 400.0})
+        .with(Mass(0.1))
         .with(Radius(15.0))
+        .with(Trail::new(30))
         .build();
 
     // for i in 0..1000{

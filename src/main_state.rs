@@ -91,6 +91,22 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
         let positions = self.world.read_storage::<Pos>();
         let radii = self.world.read_storage::<Radius>();
+        let trails = self.world.read_storage::<Trail>();
+
+        for (trail, radius) in (&trails, &radii).join(){
+            if trail.points.len() > 2{
+                let result = graphics::Mesh::new_line(
+                    ctx,
+                    &trail.points.as_slice(),
+                    0.2 * radius.0,
+                    graphics::Color::new(0.1, 0.25, 1.0, 0.5));
+
+                match result{
+                    Ok(line_mesh) => graphics::draw(ctx, &line_mesh, DrawParam::new()).expect("error drawing outline"),
+                    Err(e) => println!("{}", e),
+                }
+            }
+        }
 
         for (position, radius) in (&positions, &radii).join(){
             let outline = graphics::Mesh::new_circle( //draw bodies
@@ -104,6 +120,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
             graphics::draw(ctx, &outline, DrawParam::new()).expect("error drawing outline");
         }
+
 
         let mut mouse_pos = input::mouse::position(ctx);
 
@@ -190,7 +207,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         let delta_zoom = (screen.w/1000.0 - prev_zoom) * -1.0;
 
         let mut mouse_pos = input::mouse::position(ctx);
-        
+
         let scale = screen.w / 1000.0;
 
         mouse_pos.x = (mouse_pos.x * scale) + screen.x;

@@ -1,5 +1,11 @@
 use specs::prelude::*;
 
+use ggez::mint::Point2;
+
+type Point = Point2<f32>;
+
+use std::collections::VecDeque;
+
 #[derive(Clone)]
 pub struct Mass(pub f32);
 
@@ -18,5 +24,23 @@ impl Component for Radius{
 pub struct Charge(pub f32);
 
 impl Component for Charge{
+    type Storage = DenseVecStorage<Self>;
+}
+
+pub struct Trail{
+    pub points: Vec<Point>,
+    pub length: u32,
+}
+
+impl Trail{
+    pub fn new(length: u32) -> Self{
+        Trail{
+            points: Vec::new(),
+            length,
+        }
+    }
+}
+
+impl Component for Trail{
     type Storage = DenseVecStorage<Self>;
 }
