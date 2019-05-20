@@ -10,12 +10,18 @@ mod components;
 use systems::*;
 use components::*;
 
+mod resources;
+use resources::*;
 
 mod main_state;
 use main_state::MainState;
 
 fn main() -> GameResult {
     let mut world = World::new();
+
+    world.add_resource(TimeStep(1.0));
+    world.add_resource(PredictionSpeed(1));
+    world.add_resource(SimSpeed(1));
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(GraviSys, "gravity_system", &[])
@@ -31,7 +37,7 @@ fn main() -> GameResult {
     world.create_entity()
         .with(Movement::new(0.0, 0.0))
         .with(Pos{x: 500.0, y: 400.0})
-        .with(Mass(450.0))
+        .with(Mass(450_000.0))
         .with(Radius(25.0))
         .with(Trail::new(30))
         .build();
@@ -51,7 +57,7 @@ fn main() -> GameResult {
     //         .with(Mass(-1.0))
     //         .with(Radius(15.0))
     //         .build();
-    }
+    // }
 
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Fish")
         .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))

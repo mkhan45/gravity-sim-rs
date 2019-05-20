@@ -4,7 +4,7 @@ use crate::components::*;
 
 use std::f32::consts::PI;
 
-const MULTIPLIER: f32 = 50.0;
+const MULTIPLIER: f32 = 5.0;
 
 pub struct GraviSys;
 

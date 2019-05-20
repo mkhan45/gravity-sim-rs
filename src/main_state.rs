@@ -12,16 +12,20 @@ use ggez::{
 };
 
 use crate::components::*;
+use crate::resources::*;
 
 use std::f32::consts::PI;
 
 type Point = Point2<f32>;
+
+const DENSITY_MULTIPLIER: f32 = 0.0005;
 
 pub struct MainState<'a, 'b>{
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     start_point: Point,
     radius: f32,
+    density: f32,
 }
 
 impl<'a, 'b> MainState<'a, 'b>{
@@ -31,6 +35,7 @@ impl<'a, 'b> MainState<'a, 'b>{
             dispatcher,
             start_point: Point::from_slice(&[0.0, 0.0]),
             radius: 15.0,
+            density: 0.5,
         }
     }
 }
@@ -74,12 +79,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let scale = screen_coords.w/1000.0;
 
             let info = format!(
-                "Offset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nPress H for keybinds",
+                "Offset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nDensity: {density}\nTime Step: {timestep}\nPress H for keybinds",
 
                 x = screen_coords.x,
                 y = screen_coords.y, 
                 zoom = scale,
-                radius = self.radius
+                radius = self.radius,
+                density = self.density,
+                timestep = self.world.read_resource::<TimeStep>().0,
             );
 
             let text = graphics::Text::new(info);
@@ -192,9 +199,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                     .with(Pos{x: self.start_point.x, y: self.start_point.y})
                     .with(Movement::new(vector_x, vector_y))
                     .with(Radius(self.radius))
-                    .with(Mass(0.1))
+                    .with(Mass(DENSITY_MULTIPLIER * self.density * (4.0/3.0) * PI * self.radius.powi(3)))
                     .with(Trail::new(30))
                     .build();
+
+                println!("Mass: {}", DENSITY_MULTIPLIER * self.density * (4.0/3.0) * PI * self.radius.powi(3));
 
                 let entities = self.world.entities();
                 let flags = self.world.read_storage::<PreviewFlag>();
@@ -280,13 +289,26 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool){
         match keycode{
-            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &0.01, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
+            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &self.density, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
             _ => {},
         };
 
         self.radius += match keycode{
             KeyCode::Q => 1.0,
             KeyCode::A => -1.0,
+            _ => 0.0,
+        };
+
+        self.density += match keycode{
+            KeyCode::W => 0.5,
+            KeyCode::S => -0.5,
+            _ => 0.0,
+        };
+
+        let mut delta_t = self.world.write_resource::<TimeStep>();
+        (*delta_t).0 += match keycode{
+            KeyCode::Key1 => -0.05,
+            KeyCode::Key2 => 0.05,
             _ => 0.0,
         };
     }
