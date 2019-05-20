@@ -240,7 +240,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let entities = self.world.entities();
 
             for (entity, _flag) in (&entities, &flags).join(){
-                // entities.delete(entity).expect("error deleting preview");
+                entities.delete(entity).expect("error deleting preview");
             }
 
             self.world.entities().build_entity()

@@ -18,8 +18,8 @@ fn main() -> GameResult {
     let mut world = World::new();
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(MoveSys, "move_system", &[])
         .with(GraviSys, "gravity_system", &[])
+        .with(MoveSys, "move_system", &[])
         .with(CollisionSys, "collision_system", &[])
         .with(PreviewCollisionSys, "preview_collision_system", &[])
         .with(TrailSys, "trail_system", &[])
@@ -51,7 +51,7 @@ fn main() -> GameResult {
     //         .with(Mass(-1.0))
     //         .with(Radius(15.0))
     //         .build();
-    // }
+    }
 
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Fish")
         .window_setup(ggez::conf::WindowSetup::default().title("N-body gravity sim"))

@@ -27,7 +27,7 @@ impl<'a> System<'a> for CollisionSys{
 
                     let other_vel = other_movements.vel;
 
-                    if !collided.contains(&other_pos){
+                    if !collided.contains(&other_pos) && !collided.contains(&pos){
                         let momentum_1 = (mass.0 * vel.0, mass.0 * vel.1);
                         let momentum_2 = (other_mass.0 * other_vel.0, other_mass.0 * other_vel.1);
 
