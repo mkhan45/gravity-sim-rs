@@ -20,12 +20,13 @@ fn main() -> GameResult {
     let mut world = World::new();
 
     world.add_resource(TimeStep(1.0));
-    world.add_resource(PredictionSpeed(1));
+    world.add_resource(PredictionSpeed(50));
     world.add_resource(SimSpeed(1));
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(GraviSys, "gravity_system", &[])
-        .with(MoveSys, "move_system", &[])
+        .with(MoveSys, "move_system", &["gravity_system"])
+        .with(PreviewSpeedSys, "preview_move_sys", &["gravity_system", "move_system"])
         .with(CollisionSys, "collision_system", &[])
         .with(PreviewCollisionSys, "preview_collision_system", &[])
         .with(TrailSys, "trail_system", &[])

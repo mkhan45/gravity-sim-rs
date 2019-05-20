@@ -20,6 +20,7 @@ type Point = Point2<f32>;
 
 const DENSITY_MULTIPLIER: f32 = 0.0005;
 
+
 pub struct MainState<'a, 'b>{
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
@@ -42,8 +43,20 @@ impl<'a, 'b> MainState<'a, 'b>{
 
 impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn update(&mut self, ctx: &mut Context) -> GameResult{
+        let mut sim_speed = 1;
+
+        {
+            sim_speed = (self.world.read_resource::<SimSpeed>()).0;
+        }
+
+        for _i in 0..sim_speed {
+            self.world.maintain();
+            self.dispatcher.dispatch(&mut self.world.res);
+        }
+
         self.world.maintain();
         self.dispatcher.dispatch(&mut self.world.res);
+
 
         if ggez::timer::ticks(ctx) % 60 == 0{
             println!("FPS: {}", ggez::timer::fps(ctx));
@@ -79,7 +92,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let scale = screen_coords.w/1000.0;
 
             let info = format!(
-                "Offset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nDensity: {density}\nTime Step: {timestep}\nPress H for keybinds",
+                "
+                \nOffset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nDensity: {density}\nTime Step: {timestep}
+                \nSim Speed: {sim_speed}\nPrediction Speed: {prediction_speed}\nPress H for keybinds
+                ",
 
                 x = screen_coords.x,
                 y = screen_coords.y, 
@@ -87,6 +103,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 radius = self.radius,
                 density = self.density,
                 timestep = self.world.read_resource::<TimeStep>().0,
+                sim_speed = self.world.read_resource::<SimSpeed>().0,
+                prediction_speed = self.world.read_resource::<PredictionSpeed>().0,
             );
 
             let text = graphics::Text::new(info);
@@ -310,6 +328,20 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             KeyCode::Key1 => -0.05,
             KeyCode::Key2 => 0.05,
             _ => 0.0,
+        };
+
+        let mut sim_speed = self.world.write_resource::<SimSpeed>();
+        (*sim_speed).0 = match keycode{
+            KeyCode::Key3 => if sim_speed.0 > 1 {sim_speed.0 - 1} else {sim_speed.0},
+            KeyCode::Key4 => sim_speed.0 + 1,
+            _ => sim_speed.0,
+        };
+
+        let mut prediction_speed = self.world.write_resource::<PredictionSpeed>();
+        (*prediction_speed).0 = match keycode{
+            KeyCode::Key5 => if prediction_speed.0 > 1 {prediction_speed.0 - 1} else {prediction_speed.0},
+            KeyCode::Key6 => prediction_speed.0 + 1,
+            _ => if prediction_speed.0 < sim_speed.0 {sim_speed.0} else {prediction_speed.0},
         };
     }
 }

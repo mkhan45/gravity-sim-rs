@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use crate::components::*;
+use crate::resources::*;
 
 use std::f32::consts::PI;
 
@@ -9,9 +10,9 @@ const MULTIPLIER: f32 = 5.0;
 pub struct GraviSys;
 
 impl<'a> System<'a> for GraviSys{
-    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, ReadStorage<'a, PreviewFlag>);
+    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, ReadStorage<'a, PreviewFlag>, Read<'a, SimSpeed>);
 
-    fn run(&mut self, (pos, mut movement, mass, flags): Self::SystemData){
+    fn run(&mut self, (pos, mut movement, mass, flags, sim_speed): Self::SystemData){
         (&pos, &mut movement).par_join().for_each(|(current_pos, current_movement)|{
             current_movement.accel = (0.0, 0.0);
             for (other_pos, other_mass, ()) in (&pos, &mass, !&flags).join(){
@@ -32,6 +33,7 @@ impl<'a> System<'a> for GraviSys{
         });
     }
 }
+
 
 fn distance(a: &Pos, b: &Pos) -> f32{
     ((a.x - b.x).powi(2) + (a.y - b.y).powi(2)).sqrt()
