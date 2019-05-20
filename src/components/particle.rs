@@ -25,6 +25,7 @@ impl Component for Charge{
     type Storage = DenseVecStorage<Self>;
 }
 
+#[derive(Clone)]
 pub struct Trail{
     pub points: Vec<Point>,
     pub length: u32,

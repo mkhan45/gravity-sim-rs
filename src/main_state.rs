@@ -240,7 +240,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let entities = self.world.entities();
 
             for (entity, _flag) in (&entities, &flags).join(){
-                entities.delete(entity).expect("error deleting preview");
+                // entities.delete(entity).expect("error deleting preview");
             }
 
             self.world.entities().build_entity()
@@ -280,7 +280,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool){
         match keycode{
-            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &0.001, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
+            KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &0.01, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
             _ => {},
         };
 
@@ -304,6 +304,7 @@ fn grid(start: &Point2<f32>, radius: &f32, density: &f32, zoom: &f32, world: &mu
                 .with(Movement::new(0.0, 0.0))
                 .with(Mass(mass))
                 .with(Radius(*radius))
+                .with(Trail::new(10))
                 .build();
         });
     });

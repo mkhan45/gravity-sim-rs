@@ -32,9 +32,3 @@ impl Movement{
 impl Component for Movement{
     type Storage = VecStorage<Self>;
 }
-
-pub struct Opacity(f32);
-
-impl Component for Opacity{
-    type Storage = HashMapStorage<Self>;
-}

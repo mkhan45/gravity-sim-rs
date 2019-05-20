@@ -21,14 +21,12 @@ fn main() -> GameResult {
         .with(MoveSys, "move_system", &[])
         .with(GraviSys, "gravity_system", &[])
         .with(CollisionSys, "collision_system", &[])
+        .with(PreviewCollisionSys, "preview_collision_system", &[])
         .with(TrailSys, "trail_system", &[])
         .build();
 
     dispatcher.setup(&mut world.res);
 
-
-    world.register::<Opacity>();
-    world.register::<PreviewFlag>();
 
     world.create_entity()
         .with(Movement::new(0.0, 0.0))
