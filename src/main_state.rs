@@ -95,7 +95,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let screen_coords = graphics::screen_coordinates(ctx);
             let scale = screen_coords.w/1000.0;
 
-            let mut info = if !self.paused{
+            let info = if !self.paused{
                 format!(
                     "
                 Offset: {x}, {y}
@@ -156,7 +156,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
                 match result{
                     Ok(line_mesh) => graphics::draw(ctx, &line_mesh, DrawParam::new()).expect("error drawing outline"),
-                    Err(e) => {},
+                    Err(_e) => {},
                 }
             }
         }
@@ -283,7 +283,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         }
     }
 
-    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32){
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32){
         if input::mouse::button_pressed(ctx, MouseButton::Left){
             let scale = graphics::screen_coordinates(ctx).w / 1000.0;
             let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
