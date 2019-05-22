@@ -338,6 +338,26 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         match keycode{
             KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &self.density, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
             KeyCode::Space => self.paused = !self.paused,
+            KeyCode::R => {
+                let mut positions = self.world.write_storage::<Pos>();
+                let mut movements = self.world.write_storage::<Movement>();
+                let mut radii = self.world.write_storage::<Radius>();
+                let mut trails = self.world.write_storage::<Trail>();
+                let mut masses = self.world.write_storage::<Mass>();
+
+                let entities = self.world.entities();
+                for entity in (&entities).join(){
+                    entities.delete(entity).expect("error resetting");
+                }
+
+                entities.build_entity()
+                    .with(Movement::new(0.0, 0.0), &mut movements)
+                    .with(Pos{x: 500.0, y: 400.0}, &mut positions)
+                    .with(Mass(450_000.0), &mut masses)
+                    .with(Radius(50.0), &mut radii)
+                    .with(Trail::new(30), &mut trails)
+                    .build();
+            },
             _ => {},
         };
 
@@ -348,8 +368,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
         };
 
         self.density += match keycode{
-            KeyCode::W => 0.5,
-            KeyCode::S => -0.5,
+            KeyCode::W => 0.05,
+            KeyCode::S => -0.05,
             _ => 0.0,
         };
 

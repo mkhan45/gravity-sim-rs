@@ -43,14 +43,6 @@ fn main() -> GameResult {
         .with(Trail::new(30))
         .build();
 
-    world.create_entity()
-        .with(Movement::new(0.0, -5.0))
-        .with(Pos{x: 1200.0, y: 400.0})
-        .with(Mass(0.1))
-        .with(Radius(10.0))
-        .with(Trail::new(30))
-        .build();
-
     // for i in 0..1100{
     //     world.create_entity()
     //         .with(Movement::new(0.0, 0.0))
