@@ -242,15 +242,28 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     }
 
     fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32){
+        let scale = graphics::screen_coordinates(ctx).w / 1000.0;
+
+        let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
+        let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
+
         match button{
             MouseButton::Left => {
-                let scale = graphics::screen_coordinates(ctx).w / 1000.0;
-
-                let scaled_x = x * scale + graphics::screen_coordinates(ctx).x;
-                let scaled_y = y * scale + graphics::screen_coordinates(ctx).y;
 
                 self.start_point = Point::from_slice(&[scaled_x, scaled_y]);
             },
+
+            MouseButton::Right => {
+                let entities = self.world.entities();
+                let positions = self.world.read_storage::<Pos>();
+                let radii = self.world.read_storage::<Radius>();
+
+                (&entities, &positions, &radii).par_join().for_each(|(entity, pos, radius)|{
+                    if distance((pos.x, pos.y), (scaled_x, scaled_y)) < radius.0{
+                        entities.delete(entity).expect("error deleting");
+                    }
+                });
+            }
 
             _ => {},
         }
@@ -368,4 +381,8 @@ fn grid(start: &Point2<f32>, radius: &f32, density: &f32, zoom: &f32, world: &mu
                 .build();
         });
     });
+}
+
+fn distance(a: (f32, f32), b: (f32, f32)) -> f32{
+    ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt()
 }
