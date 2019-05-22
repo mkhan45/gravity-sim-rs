@@ -95,8 +95,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let screen_coords = graphics::screen_coordinates(ctx);
             let scale = screen_coords.w/1000.0;
 
-            let info = format!(
-                "
+            let mut info = if !self.paused{
+                format!(
+                    "
                 Offset: {x}, {y}
                 Zoom {zoom}
                 Radius: {radius}
@@ -104,7 +105,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 Time Step: {timestep}
                 Sim Speed: {sim_speed}
                 Prediction Speed: {prediction_speed}
-                Press H for keybinds
+                Press space to pause and view keybinds 
                 ",
 
                 x = screen_coords.x,
@@ -114,8 +115,17 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 density = self.density,
                 timestep = self.world.read_resource::<TimeStep>().0,
                 sim_speed = self.world.read_resource::<SimSpeed>().0,
-                prediction_speed = self.world.read_resource::<PredictionSpeed>().0,
-                );
+                prediction_speed = self.world.read_resource::<PredictionSpeed>().0)
+            }else {
+                format!(
+                    "
+                Q and A to increase/decrease radius
+                W and S to increase/decrease density
+                1 and 2 to increase/decrease step size
+                3 and 4 to increase/decrease sim speed
+                5 and 6 to increase/decrease prediction speed
+                ")
+            };
 
             let text = graphics::Text::new(info);
             let params = graphics::DrawParam::new()
