@@ -27,6 +27,7 @@ pub struct MainState<'a, 'b>{
     start_point: Point,
     radius: f32,
     density: f32,
+    paused: bool,
 }
 
 impl<'a, 'b> MainState<'a, 'b>{
@@ -37,48 +38,51 @@ impl<'a, 'b> MainState<'a, 'b>{
             start_point: Point::from_slice(&[0.0, 0.0]),
             radius: 15.0,
             density: 0.5,
+            paused: false,
         }
     }
 }
 
 impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn update(&mut self, ctx: &mut Context) -> GameResult{
-        let mut sim_speed = 1;
+        if !self.paused{
+            let mut sim_speed = 1;
 
-        {
-            sim_speed = (self.world.read_resource::<SimSpeed>()).0;
-        }
+            {
+                sim_speed = (self.world.read_resource::<SimSpeed>()).0;
+            }
 
-        for _i in 0..sim_speed {
+            for _i in 0..sim_speed {
+                self.world.maintain();
+                self.dispatcher.dispatch(&mut self.world.res);
+            }
+
             self.world.maintain();
             self.dispatcher.dispatch(&mut self.world.res);
-        }
-
-        self.world.maintain();
-        self.dispatcher.dispatch(&mut self.world.res);
 
 
-        if ggez::timer::ticks(ctx) % 60 == 0{
-            println!("FPS: {}", ggez::timer::fps(ctx));
-        }
-
-
-        {
-            let mut screen = graphics::screen_coordinates(ctx);
-            let scale = screen.w/1000.0;
-            if input::keyboard::is_key_pressed(ctx, KeyCode::Up){
-                screen.translate([0.0, -10.0 * scale]);
-            }else if input::keyboard::is_key_pressed(ctx, KeyCode::Down){
-                screen.translate([0.0, 10.0 * scale]);
+            if ggez::timer::ticks(ctx) % 60 == 0{
+                println!("FPS: {}", ggez::timer::fps(ctx));
             }
 
-            if input::keyboard::is_key_pressed(ctx, KeyCode::Left){
-                screen.translate([-10.0 * scale, 0.0]);
-            }else if input::keyboard::is_key_pressed(ctx, KeyCode::Right){
-                screen.translate([10.0 * scale, 0.0]);
-            }
 
-            graphics::set_screen_coordinates(ctx, screen).expect("error moving screen");
+            {
+                let mut screen = graphics::screen_coordinates(ctx);
+                let scale = screen.w/1000.0;
+                if input::keyboard::is_key_pressed(ctx, KeyCode::Up){
+                    screen.translate([0.0, -10.0 * scale]);
+                }else if input::keyboard::is_key_pressed(ctx, KeyCode::Down){
+                    screen.translate([0.0, 10.0 * scale]);
+                }
+
+                if input::keyboard::is_key_pressed(ctx, KeyCode::Left){
+                    screen.translate([-10.0 * scale, 0.0]);
+                }else if input::keyboard::is_key_pressed(ctx, KeyCode::Right){
+                    screen.translate([10.0 * scale, 0.0]);
+                }
+
+                graphics::set_screen_coordinates(ctx, screen).expect("error moving screen");
+            }
         }
 
         Ok(())
@@ -111,7 +115,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 timestep = self.world.read_resource::<TimeStep>().0,
                 sim_speed = self.world.read_resource::<SimSpeed>().0,
                 prediction_speed = self.world.read_resource::<PredictionSpeed>().0,
-            );
+                );
 
             let text = graphics::Text::new(info);
             let params = graphics::DrawParam::new()
@@ -155,7 +159,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 Some(_flag) => graphics::Color::new(0.2, 1.0, 0.5, 0.5),
                 None => graphics::Color::new(1.0, 1.0, 1.0, 1.0),
             };
-            
+
 
             let outline = graphics::Mesh::new_circle( //draw bodies
                 ctx,
@@ -327,6 +331,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool){
         match keycode{
             KeyCode::G => grid(&graphics::screen_coordinates(ctx).point(), &self.radius, &self.density, &(graphics::screen_coordinates(ctx).w/1000.0), &mut self.world),
+            KeyCode::Space => self.paused = !self.paused,
             _ => {},
         };
 
