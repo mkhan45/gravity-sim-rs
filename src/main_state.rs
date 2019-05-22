@@ -93,8 +93,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
             let info = format!(
                 "
-                \nOffset: {x}, {y}\nZoom {zoom}\nRadius: {radius}\nDensity: {density}\nTime Step: {timestep}
-                \nSim Speed: {sim_speed}\nPrediction Speed: {prediction_speed}\nPress H for keybinds
+                Offset: {x}, {y}
+                Zoom {zoom}
+                Radius: {radius}
+                Density: {density}
+                Time Step: {timestep}
+                Sim Speed: {sim_speed}
+                Prediction Speed: {prediction_speed}
+                Press H for keybinds
                 ",
 
                 x = screen_coords.x,

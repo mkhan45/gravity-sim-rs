@@ -19,8 +19,8 @@ use main_state::MainState;
 fn main() -> GameResult {
     let mut world = World::new();
 
-    world.add_resource(TimeStep(1.0));
-    world.add_resource(PredictionSpeed(50));
+    world.add_resource(TimeStep(0.5));
+    world.add_resource(PredictionSpeed(75));
     world.add_resource(SimSpeed(1));
 
     let mut dispatcher = DispatcherBuilder::new()
@@ -39,7 +39,7 @@ fn main() -> GameResult {
         .with(Movement::new(0.0, 0.0))
         .with(Pos{x: 500.0, y: 400.0})
         .with(Mass(450_000.0))
-        .with(Radius(25.0))
+        .with(Radius(50.0))
         .with(Trail::new(30))
         .build();
 

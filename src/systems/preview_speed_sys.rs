@@ -12,9 +12,10 @@ const MULTIPLIER: f32 = 5.0;
 impl <'a> System<'a> for PreviewSpeedSys{
     type SystemData = (WriteStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, 
                        ReadStorage<'a, PreviewFlag>, WriteStorage<'a, Trail>, Read<'a, SimSpeed>,
-                       Read<'a, PredictionSpeed>, Read<'a, TimeStep>);
+                       Read<'a, PredictionSpeed>, Read<'a, TimeStep>, Entities<'a>,
+                       ReadStorage<'a, Radius>);
 
-    fn run(&mut self, (mut pos, mut movement, mass, flags, mut trails, sim_speed, prediction_speed, time_step): Self::SystemData){
+    fn run(&mut self, (mut pos, mut movement, mass, flags, mut trails, sim_speed, prediction_speed, time_step, entities, radii): Self::SystemData){
         for _i in sim_speed.0..prediction_speed.0{
             (&pos, &mut movement, &flags).join().for_each(|(current_pos, current_movement, _flag)|{
                 current_movement.accel = (0.0, 0.0);
