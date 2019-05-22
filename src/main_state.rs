@@ -55,7 +55,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
             self.world.maintain();
             self.dispatcher.dispatch(&mut self.world.res);
-
+        }
 
             if ggez::timer::ticks(ctx) % 60 == 0{
                 println!("FPS: {}", ggez::timer::fps(ctx));
@@ -79,7 +79,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
 
                 graphics::set_screen_coordinates(ctx, screen).expect("error moving screen");
             }
-        }
+        
 
         Ok(())
     }
