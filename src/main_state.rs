@@ -120,6 +120,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 1 and 2 to increase/decrease step size
                 3 and 4 to increase/decrease sim speed
                 5 and 6 to increase/decrease prediction speed
+                R to reset
                 ")
             };
 
