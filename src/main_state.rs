@@ -46,11 +46,7 @@ impl<'a, 'b> MainState<'a, 'b>{
 impl<'a, 'b> EventHandler for MainState<'a, 'b>{
     fn update(&mut self, ctx: &mut Context) -> GameResult{
         if !self.paused{
-            let mut sim_speed = 1;
-
-            {
-                sim_speed = (self.world.read_resource::<SimSpeed>()).0;
-            }
+            let sim_speed = (self.world.read_resource::<SimSpeed>()).0;
 
             for _i in 0..sim_speed {
                 self.world.maintain();

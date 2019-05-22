@@ -1,18 +1,15 @@
 use specs::prelude::*;
 
 use crate::components::*;
-use crate::resources::*;
-
-use std::f32::consts::PI;
 
 const MULTIPLIER: f32 = 5.0;
 
 pub struct GraviSys;
 
 impl<'a> System<'a> for GraviSys{
-    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, ReadStorage<'a, PreviewFlag>, Read<'a, SimSpeed>);
+    type SystemData = (ReadStorage<'a, Pos>, WriteStorage<'a, Movement>, ReadStorage<'a, Mass>, ReadStorage<'a, PreviewFlag>);
 
-    fn run(&mut self, (pos, mut movement, mass, flags, sim_speed): Self::SystemData){
+    fn run(&mut self, (pos, mut movement, mass, flags): Self::SystemData){
         (&pos, &mut movement).par_join().for_each(|(current_pos, current_movement)|{
             current_movement.accel = (0.0, 0.0);
             for (other_pos, other_mass, ()) in (&pos, &mass, !&flags).join(){

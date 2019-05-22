@@ -1,11 +1,8 @@
 use specs::prelude::*;
-use specs::world::EntitiesRes;
 
 use crate::components::*;
 
 use std::f32::consts::PI;
-
-use std::collections::HashSet;
 
 pub struct CollisionSys;
 
