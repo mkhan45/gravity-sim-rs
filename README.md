@@ -1,5 +1,7 @@
 # gravity-sim
-N body gravity sim with rust and ggez, made to learn rust
+N body gravity sim with rust and `ggez`, made to learn rust
+
+Initially written with OOP, made a new version with `specs` that runs about 20% better on my desktop PC, but slightly worse on my laptop. Maybe because it parallelizes a lot more?
 
 Web port made with quicksilver, lots of features missing:
 
