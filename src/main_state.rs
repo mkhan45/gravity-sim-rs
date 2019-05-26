@@ -296,9 +296,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
             let mut trails = self.world.write_storage::<Trail>();
             let entities = self.world.entities();
 
-            for (entity, _flag) in (&entities, &flags).join(){
-                entities.delete(entity).expect("error deleting preview");
-            }
+
+            let max_predictions = self.world.read_resource::<MaxPredictions>();
+            let mut num_predictions = self.world.write_resource::<CurrentPredictions>();
+            let real_num = (&entities, &flags).join().count();
+
+            (*num_predictions).0 += 1;
 
             self.world.entities().build_entity()
                 .with(Pos{x: self.start_point.x, y: self.start_point.y}, &mut positions)
@@ -307,6 +310,15 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b>{
                 .with(PreviewFlag, &mut flags)
                 .with(Trail::new(1), &mut trails)
                 .build();
+
+            // let (entity, _flag) = (&entities, &flags).join().nth(0).unwrap();
+            (&entities, &flags).join().take((num_predictions.0 - max_predictions.0) as usize).for_each(|(entity, flag)|{
+                entities.delete(entity).expect("error deleting preview");
+                dbg!(max_predictions.0);
+                dbg!(num_predictions.0);
+                dbg!(real_num);
+                (*num_predictions).0 -= 1;
+            });
         }
     }
 

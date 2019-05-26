@@ -20,8 +20,10 @@ fn main() -> GameResult {
     let mut world = World::new();
 
     world.add_resource(TimeStep(0.5));
-    world.add_resource(PredictionSpeed(75));
+    world.add_resource(PredictionSpeed(1));
     world.add_resource(SimSpeed(1));
+    world.add_resource(MaxPredictions(1));
+    world.add_resource(CurrentPredictions(0));
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(GraviSys, "gravity_system", &[])
