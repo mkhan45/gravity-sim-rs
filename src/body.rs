@@ -50,14 +50,14 @@ impl Body {
 
     }
 
-    pub fn update_euler(&mut self, step_size: &f32){
+    pub fn update_euler(&mut self, step_size: f32){
         self.pos += Vector2::new(self.velocity.x * step_size, self.velocity.y * step_size);
         self.velocity += self.current_accel * step_size.powi(2);
     }
 
-    pub fn update_verlet(&mut self, step_size: &f32){ //verlet velocity
-        self.velocity += ((self.current_accel + self.past_accel)/2.0) * *step_size;
-        self.pos += self.velocity * *step_size + (self.current_accel/2.0) * (*step_size).powi(2);
+    pub fn update_verlet(&mut self, step_size: f32){ //verlet velocity
+        self.velocity += ((self.current_accel + self.past_accel)/2.0) * step_size;
+        self.pos += self.velocity * step_size + (self.current_accel/2.0) * (step_size).powi(2);
         self.past_accel = self.current_accel;
     }
 }

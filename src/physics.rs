@@ -36,36 +36,36 @@ pub fn collide(body1: &Body, body2: &Body) -> Body{ //inelastic collision that c
     )
 }
 
-pub fn distance(a: &Point2, b: &Point2) -> f32{
+pub fn distance(a: Point2, b: Point2) -> f32{
     ((b.x - a.x).powi(2) + (b.y-a.y).powi(2)).sqrt()
 }
 
-pub fn angle(a: &Point2, b: &Point2) -> f32{
+pub fn angle(a: Point2, b: Point2) -> f32{
     let restricted_dom = ((b.y - a.y)/(b.x - a.x)).atan(); //.atan() returns from -pi/2 to +pi/2
 
     if b.x >= a.x {restricted_dom + PI}
     else {restricted_dom}
 }
 
-pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, step_size: &f32) -> Vec<Body>{
-        let bodies_clone = bodies.clone();
-        let mut bodies = bodies.clone();
+pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: Integrator, step_size: f32) -> Vec<Body>{
+        let bodies_clone = bodies.to_owned();
+        let mut bodies = bodies.to_owned();
 
         bodies.par_iter_mut() //parallel, so I can only change stuff in the iterator
             .for_each(|current_body|{ //in this case I can only change current_body
                 current_body.current_accel = Vector2::new(0.0, 0.0);
 
-                &bodies_clone.iter() //could maybe make this parallel by folding into a tuple (accel, collision)
+                bodies_clone.iter() //could maybe make this parallel by folding into a tuple (accel, collision)
                     .enumerate()
                     .for_each(|(other_i, other_body)|{ //other_body is an old version of it from before the loop
-                        let r = distance(&other_body.pos, &current_body.pos);
+                        let r = distance(other_body.pos, current_body.pos);
 
                         if r <= other_body.radius + current_body.radius{
                             current_body.collision = Some(other_i);
                         }else{
-                            let g_mag = (G * &other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
-                            let c_mag = (k * &other_body.charge * &current_body.charge * -1.0)/(r.powi(2) * &current_body.mass);
-                            let angle = angle(&other_body.pos, &current_body.pos);
+                            let g_mag = (G * other_body.mass)/(r.powi(2)); //acceleration = Gm_2/r^2
+                            let c_mag = (k * other_body.charge * current_body.charge * -1.0)/(r.powi(2) * current_body.mass);
+                            let angle = angle(other_body.pos, current_body.pos);
 
                             current_body.current_accel += Vector2::new(angle.cos() * (g_mag + c_mag), angle.sin() * (g_mag + c_mag));
                         }
@@ -73,8 +73,8 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
 
                 current_body.update_trail();
                 match method{
-                    &Integrator::Euler => current_body.update_euler(step_size),
-                    &Integrator::Verlet => current_body.update_verlet(step_size),
+                    Integrator::Euler => current_body.update_euler(step_size),
+                    Integrator::Verlet => current_body.update_verlet(step_size),
                 };
             });
         
@@ -97,7 +97,7 @@ pub fn update_velocities_and_collide(bodies: &Vec<Body>, method: &Integrator, st
 
         //remove collided
 
-        if collided.len() != 0{
+        if !collided.is_empty(){
             bodies.par_iter()
                 .enumerate()
                 .filter_map(|(index, body)|{

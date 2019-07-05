@@ -47,7 +47,7 @@ impl MainState {
         let bodies = vec![ //initialize with one massive body in center
             Body::new(
                 Point2::new(500.0, 400.0), //position
-                300000.0, //mass
+                300_000.0, //mass
                 0.0, //charge
                 100.0,  //radius
                 Vector2::new(0.0, 0.0)), //velocity
@@ -86,7 +86,7 @@ impl event::EventHandler for MainState {
 
         if !self.paused{ //physics sim
             (0..self.fast_forward).for_each(|_i|{
-                self.bodies = update_velocities_and_collide(&self.bodies, &self.integrator, &self.step_size);
+                self.bodies = update_velocities_and_collide(&self.bodies, self.integrator, self.step_size);
 
                 (0..self.bodies.len()).for_each(|i|{
                     self.bodies[i].trail_length = self.trail_length;
@@ -99,9 +99,9 @@ impl event::EventHandler for MainState {
             for _i in 0..self.predict_speed { //reimplementation of update_bodies_and_collide() but for only predict body
                 self.predict_body.current_accel = self.bodies.iter()
                     .fold(Vector2::new(0.0, 0.0), |acc: Vector2, body|{
-                        let r = distance(&body.pos, &self.predict_body.pos);
+                        let r = distance(body.pos, self.predict_body.pos);
                         let a_mag = (G*body.mass)/(r.powi(2));
-                        let angle = angle(&body.pos, &self.predict_body.pos);
+                        let angle = angle(body.pos, self.predict_body.pos);
                         acc + Vector2::new(a_mag * angle.cos(), a_mag * angle.sin())
                     });
 
@@ -109,8 +109,8 @@ impl event::EventHandler for MainState {
                 self.predict_body.update_trail();
 
                 match self.integrator{
-                    Integrator::Euler => self.predict_body.update_euler(&self.step_size),
-                    Integrator::Verlet => self.predict_body.update_verlet(&self.step_size),
+                    Integrator::Euler => self.predict_body.update_euler(self.step_size),
+                    Integrator::Verlet => self.predict_body.update_verlet(self.step_size),
                 };
             }
         }
@@ -307,8 +307,8 @@ impl event::EventHandler for MainState {
     }
 
     fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: event::MouseButton, x: f32, y: f32) {
-        let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
-        let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
+        let zoomed_x = (x - self.offset.x) * (1.0/self.zoom);
+        let zoomed_y = (y - self.offset.y) * (1.0/self.zoom);
 
         match button {
             event::MouseButton::Left => {
@@ -321,7 +321,7 @@ impl event::EventHandler for MainState {
                 self.bodies = self.bodies.par_iter() //iterate through meshes and delete any under mouse
                     .filter_map(|body| {
                         let mouse_pointer = Point2::new(zoomed_x, zoomed_y);
-                        if distance(&mouse_pointer, &body.pos) > body.radius {
+                        if distance(mouse_pointer, body.pos) > body.radius {
                             Some(body.clone())
                         }else {
                             None
@@ -337,18 +337,14 @@ impl event::EventHandler for MainState {
         let zoomed_x = (&x - self.offset.x) * (1.0/self.zoom);
         let zoomed_y = (&y - self.offset.y) * (1.0/self.zoom);
 
-        match button {
-            event::MouseButton::Left => {
-                self.bodies.push(Body::new(
-                        self.start_point,
-                        self.radius.powi(3) * self.density,
-                        self.charge, 
-                        self.radius,
-                        Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
-                );
-            },
-
-            _ => {},
+        if let event::MouseButton::Left = button{
+            self.bodies.push(Body::new(
+                    self.start_point,
+                    self.radius.powi(3) * self.density,
+                    self.charge, 
+                    self.radius,
+                    Vector2::new((zoomed_x - self.start_point.x)/5.0 * self.zoom, (zoomed_y - self.start_point.y)/5.0 * self.zoom ))
+            );
         }
 
         self.mouse_pressed = false;
@@ -356,10 +352,10 @@ impl event::EventHandler for MainState {
 
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) { 
-        let prev_zoom = self.zoom.clone();
+        let prev_zoom = self.zoom;
         self.zoom *= 1.0 + (y * 0.1); 
         let delta_zoom = self.zoom - prev_zoom;
-        self.zoom = ((self.zoom * 100000.0).round())/100000.0;
+        self.zoom = ((self.zoom * 100_000.0).round())/100_000.0;
 
         let focus = Vector2::new(self.mouse_pos.x + self.offset.x, self.mouse_pos.y + self.offset.y) * delta_zoom;
         self.offset -= focus;
@@ -437,13 +433,13 @@ impl event::EventHandler for MainState {
                 match keycode{ //misc keys
                     input::keyboard::KeyCode::Space => self.paused = !self.paused,
 
-                    input::keyboard::KeyCode::G => self.bodies.append(&mut grid(&self.offset, &self.radius, &self.density, &self.zoom)),
+                    input::keyboard::KeyCode::G => self.bodies.append(&mut grid(self.offset, self.radius, self.density, self.zoom)),
 
                     input::keyboard::KeyCode::R => {
                         self.bodies = vec![
                             Body::new(
                                 Point2::new(500.0, 400.0),
-                                300000.0,
+                                300_000.0,
                                 0.0,
                                 100.0,
                                 Vector2::new(0.0, 0.0)),
@@ -467,11 +463,11 @@ impl event::EventHandler for MainState {
                     input::keyboard::KeyCode::Key9 => self.input_type = Some(InputVar::Radius),
 
                     input::keyboard::KeyCode::Key8 => self.input_type = Some(InputVar::PredictSpeed),
-                    
+
                     input::keyboard::KeyCode::Key7 => self.input_type = Some(InputVar::FastForward),
-                    
+
                     input::keyboard::KeyCode::Key6 => self.input_type = Some(InputVar::StepSize),
-                    
+
                     input::keyboard::KeyCode::Key5 => self.input_type = Some(InputVar::Charge),
 
                     _ => {},
@@ -483,7 +479,7 @@ impl event::EventHandler for MainState {
                     self.input_buffer = self.input_buffer.chars().skip(1).collect();
 
                     match self.input_buffer.parse::<f32>(){
-                        Err(e) => {},
+                        Err(_e) => {},
                         Ok(num) => {
                             match self.input_type{
                                 Some(InputVar::Density) => self.density = num,
@@ -540,7 +536,7 @@ pub fn main() -> GameResult{
     event::run(ctx, event_loop, state)
 }
 
-fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
+fn grid(start: Point2, radius: f32, density: f32, zoom: f32) -> Vec<Body> {
     //create a 10x10 grid of bodies
     let mut new_bodies: Vec<Body> = Vec::new();
 
@@ -551,7 +547,7 @@ fn grid(start: &Point2, radius: &f32, density: &f32, zoom: &f32) -> Vec<Body> {
                     point,
                     radius.powi(3) * density,
                     0.0,
-                    *radius,
+                    radius,
                     Vector2::new(0.0, 0.0)));
         });
     });
