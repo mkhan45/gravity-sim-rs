@@ -31,20 +31,3 @@ Right click over a body to delete it.
 G creates a 10x10 grid of bodies with the specified radii and densities.
 
 R to reset.
-
-## Running
-
-### Windows
-1. Go to the binaries folder and download the exe and the dll to the same folder and run.
-
-### Linux
-1. Go to the binaries folder and download the linux executable and run. You need SDL2 installed.
-
-### Mac
-1. Build it yourself 
-
-### Building
-1. Install rust and switch to the nightly toolchain. 
-2. You need SDL2 build dependencies.
-
-``` cargo build --release ```
