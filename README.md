@@ -1,4 +1,6 @@
 # gravity-sim
+Superseded by https://github.com/mkhan45/gravity-sim-v2
+
 N body gravity sim with rust and `ggez`, made to learn rust
 
 Initially written with OOP, made a new version with `specs` that runs about 20% better on my desktop PC, but slightly worse on my laptop. Maybe because it parallelizes a lot more?
