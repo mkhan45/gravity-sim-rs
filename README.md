@@ -1,5 +1,5 @@
 # gravity-sim
-Superseded by https://github.com/mkhan45/gravity-sim-v2
+## Superseded by https://github.com/mkhan45/gravity-sim-v2
 
 N body gravity sim with rust and `ggez`, made to learn rust
 
